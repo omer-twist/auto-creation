@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:placid.app)",
+      "WebSearch"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
