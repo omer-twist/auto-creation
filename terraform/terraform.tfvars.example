@@ -1,0 +1,9 @@
+# Copy this to terraform.tfvars and fill in your values
+
+aws_region           = "us-east-1"
+function_name        = "campaigns-generator"
+placid_api_token     = "your-placid-api-token"
+placid_template_uuid = "your-template-uuid"
+openai_api_key       = "your-openai-api-key"
+monday_api_key       = "your-monday-api-key"
+monday_board_id      = "your-board-id"

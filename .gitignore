@@ -3,3 +3,12 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.tfvars
+terraform/lambda.zip
+terraform/layer.zip
+terraform/.terraform.lock.hcl
