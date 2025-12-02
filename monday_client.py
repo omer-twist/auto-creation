@@ -7,18 +7,19 @@ MONDAY_FILE_URL = "https://api.monday.com/v2/file"
 
 
 def create_item(
-    api_key: str, board_id: str, item_name: str, column_values: dict
+    api_key: str, board_id: str, item_name: str, column_values: dict, group_id: str = "topics"
 ) -> int:
     """Create a new item in Monday board. Returns item_id."""
     query = """
-    mutation ($boardId: ID!, $itemName: String!, $columnValues: JSON!) {
-        create_item (board_id: $boardId, item_name: $itemName, column_values: $columnValues) {
+    mutation ($boardId: ID!, $groupId: String!, $itemName: String!, $columnValues: JSON!) {
+        create_item (board_id: $boardId, group_id: $groupId, item_name: $itemName, column_values: $columnValues) {
             id
         }
     }
     """
     variables = {
         "boardId": board_id,
+        "groupId": group_id,
         "itemName": item_name,
         "columnValues": json.dumps(column_values),
     }
@@ -42,7 +43,7 @@ def upload_file_to_column(
     api_key: str, item_id: int, column_id: str, file_bytes: bytes, filename: str
 ) -> dict:
     """Upload a file to a Monday.com file column."""
-    query = f'mutation {{ add_file_to_column (item_id: {item_id}, column_id: "{column_id}") {{ id }} }}'
+    query = f'mutation add_file($file: File!) {{ add_file_to_column (item_id: {item_id}, column_id: "{column_id}", file: $file) {{ id }} }}'
 
     files = {
         "query": (None, query),

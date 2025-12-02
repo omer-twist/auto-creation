@@ -16,9 +16,16 @@ from placid.orchestrator import Orchestrator
 from placid.tracker import JobTracker
 
 
+# Monday column IDs
+CREATIVES_COLUMN_ID = "file_mky7b1ww"
+TEST_FIELD_COLUMN_ID = "text_mky7650h"
+
+
 # Step 1: Create Monday row
 def create_monday_row(item: str, column_values: dict) -> int:
     """Create a Monday row with all fields. Returns item_id."""
+    # Add test field value
+    column_values[TEST_FIELD_COLUMN_ID] = "omer-test"
     return create_item(MONDAY_API_KEY, MONDAY_BOARD_ID, item, column_values)
 
 
@@ -39,14 +46,14 @@ def generate_creatives(item: str, batch_num: int) -> dict:
 
 
 # Step 3: Upload images
-def upload_images(item_id: int, urls: list[str], column_ids: list[str]):
-    """Download and upload images to Monday row."""
-    for url, column_id in zip(urls, column_ids):
+def upload_images(item_id: int, urls: list[str]):
+    """Download and upload images to Monday row's Creatives column."""
+    for i, url in enumerate(urls):
         response = requests.get(url, stream=True, timeout=30)
         response.raise_for_status()
         file_bytes = response.content
-        filename = f"creative_{column_id}.jpg"
-        upload_file_to_column(MONDAY_API_KEY, item_id, column_id, file_bytes, filename)
+        filename = f"creative_{i + 1}.jpg"
+        upload_file_to_column(MONDAY_API_KEY, item_id, CREATIVES_COLUMN_ID, file_bytes, filename)
 
 
 def lambda_handler(event, context):
@@ -55,7 +62,6 @@ def lambda_handler(event, context):
     item = body.get("item")
     batch_num = body.get("batch_num")
     column_values = body.get("column_values", {})  # Other Monday fields
-    file_column_ids = body.get("file_column_ids", ["file_1", "file_2", "file_3"])
 
     if not all([item, batch_num]):
         return {
@@ -70,8 +76,8 @@ def lambda_handler(event, context):
         # Step 2: Generate creatives
         creatives = generate_creatives(item, batch_num)
 
-        # Step 3: Upload images to the row
-        upload_images(item_id, creatives["urls"], file_column_ids)
+        # Step 3: Upload images to the Creatives column
+        upload_images(item_id, creatives["urls"])
 
         return {
             "statusCode": 200,
