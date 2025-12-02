@@ -75,3 +75,24 @@ def get_all_variants() -> list[ImageVariant]:
         for color in all_colors
         for font in FONTS
     ]
+
+
+def get_variant_by_index(batch_num: int, color_index: int) -> ImageVariant:
+    """
+    Get a specific variant by batch number and color index.
+
+    Args:
+        batch_num: Batch number (1, 2, or 3)
+        color_index: Color index within batch (0, 1, or 2)
+
+    Returns:
+        ImageVariant with the specified color and default font.
+    """
+    if batch_num not in COLOR_BATCHES:
+        raise ValueError(f"Invalid batch_num: {batch_num}. Valid: {list(COLOR_BATCHES.keys())}")
+
+    colors = COLOR_BATCHES[batch_num]
+    if not 0 <= color_index < len(colors):
+        raise ValueError(f"Invalid color_index: {color_index}. Valid: 0-{len(colors)-1}")
+
+    return ImageVariant(colors[color_index], FONTS[0])
