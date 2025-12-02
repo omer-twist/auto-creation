@@ -85,7 +85,7 @@ def poll_all_images(client: PlacidClient, image_ids: dict, poll_interval: int = 
 
 def create_monday_row_for_batch(topic: str, batch_num: int) -> int:
     """Create a Monday row for one batch (3 images per row)."""
-    item_name = f"{topic} - Batch {batch_num}"
+    item_name = topic
     column_values = {TEST_FIELD_COLUMN_ID: "auto-generated"}
     return create_item(MONDAY_API_KEY, MONDAY_BOARD_ID, item_name, column_values)
 
@@ -102,9 +102,12 @@ def upload_image_to_row(item_id: int, image_url: str, index: int):
 
 def lambda_handler(event, context):
     """
-    AWS Lambda handler - new 3-stage pipeline flow.
+    AWS Lambda handler - triggered by SQS or HTTP.
 
-    Input:
+    SQS event format: {"Records": [{"body": "{...}"}]}
+    HTTP event format: {"body": "{...}"}
+
+    Input payload:
     {
         "topic": "Girls Bracelet Making Kit",
         "event_mode": "BLACK_FRIDAY",
@@ -115,7 +118,13 @@ def lambda_handler(event, context):
 
     Output: 3 Monday rows with 9 images total (3 images per row, grouped by batch).
     """
-    body = json.loads(event.get("body", "{}"))
+    # Handle SQS event format
+    if "Records" in event:
+        # SQS trigger - body is in Records[0].body
+        body = json.loads(event["Records"][0]["body"])
+    else:
+        # HTTP trigger (for local testing)
+        body = json.loads(event.get("body", "{}"))
 
     # Validate required field
     if not body.get("topic"):

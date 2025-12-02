@@ -1,19 +1,24 @@
 output "lambda_function_name" {
-  description = "Lambda function name"
+  description = "Worker Lambda function name"
   value       = aws_lambda_function.image_generator.function_name
 }
 
 output "lambda_function_arn" {
-  description = "Lambda function ARN"
+  description = "Worker Lambda function ARN"
   value       = aws_lambda_function.image_generator.arn
 }
 
-output "lambda_function_url" {
-  description = "Lambda function URL"
-  value       = aws_lambda_function_url.image_generator_url.function_url
+output "enqueue_url" {
+  description = "HTTP endpoint to queue jobs (call this from UI)"
+  value       = aws_lambda_function_url.enqueue_url.function_url
 }
 
-output "reserved_concurrency" {
-  description = "Reserved concurrent executions"
-  value       = aws_lambda_function.image_generator.reserved_concurrent_executions
+output "sqs_queue_url" {
+  description = "SQS queue URL"
+  value       = aws_sqs_queue.campaigns_queue.url
+}
+
+output "max_concurrency" {
+  description = "Max concurrent Lambda executions (from SQS trigger)"
+  value       = 3
 }

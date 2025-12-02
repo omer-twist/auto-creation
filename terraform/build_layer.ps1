@@ -16,7 +16,7 @@ if (Test-Path "layer.zip") { Remove-Item -Force "layer.zip" }
 New-Item -ItemType Directory -Path "python" -Force | Out-Null
 
 # Install dependencies
-pip install -r ../requirements.txt -t python/ --quiet
+python -m pip install -r ../requirements.txt -t python/ --quiet
 
 # Create zip
 Compress-Archive -Path "python" -DestinationPath "layer.zip" -Force

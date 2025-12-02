@@ -36,6 +36,36 @@ resource "aws_iam_role_policy_attachment" "lambda_basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+# SQS permissions for Lambda
+resource "aws_iam_role_policy_attachment" "lambda_sqs" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole"
+}
+
+# SQS Queue for queuing requests
+resource "aws_sqs_queue" "campaigns_queue" {
+  name                       = "${var.function_name}-queue"
+  visibility_timeout_seconds = 360  # 6 min (longer than Lambda timeout)
+  message_retention_seconds  = 86400  # 1 day
+  receive_wait_time_seconds  = 20  # Long polling
+}
+
+# Policy to allow sending messages to SQS
+resource "aws_sqs_queue_policy" "campaigns_queue_policy" {
+  queue_url = aws_sqs_queue.campaigns_queue.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "sqs:SendMessage"
+        Resource  = aws_sqs_queue.campaigns_queue.arn
+      }
+    ]
+  })
+}
+
 # Lambda function
 resource "aws_lambda_function" "image_generator" {
   function_name = var.function_name
@@ -50,7 +80,7 @@ resource "aws_lambda_function" "image_generator" {
 
   layers = [aws_lambda_layer_version.dependencies.arn]
 
-  reserved_concurrent_executions = 3  # Concurrency limit
+  # No reserved concurrency - SQS trigger handles it
 
   environment {
     variables = {
@@ -71,6 +101,11 @@ data "archive_file" "lambda_zip" {
   source {
     content  = file("${path.module}/../handler.py")
     filename = "handler.py"
+  }
+
+  source {
+    content  = file("${path.module}/../config.py")
+    filename = "config.py"
   }
 
   source {
@@ -154,8 +189,84 @@ resource "aws_lambda_layer_version" "dependencies" {
   }
 }
 
-# Function URL (optional - for easy HTTP access)
-resource "aws_lambda_function_url" "image_generator_url" {
-  function_name      = aws_lambda_function.image_generator.function_name
-  authorization_type = "NONE"  # Change to AWS_IAM for production
+# SQS Event Source Mapping - triggers worker Lambda from queue with max 3 concurrent
+resource "aws_lambda_event_source_mapping" "sqs_trigger" {
+  event_source_arn                   = aws_sqs_queue.campaigns_queue.arn
+  function_name                      = aws_lambda_function.image_generator.arn
+  batch_size                         = 1
+  maximum_batching_window_in_seconds = 0
+  scaling_config {
+    maximum_concurrency = 3  # MAX 3 CONCURRENT - this is the real queue limit
+  }
+}
+
+# Enqueue Lambda - receives HTTP, puts in SQS, returns immediately
+resource "aws_lambda_function" "enqueue" {
+  function_name = "${var.function_name}-enqueue"
+  role          = aws_iam_role.lambda_role.arn
+  handler       = "enqueue.lambda_handler"
+  runtime       = "python3.11"
+  timeout       = 10
+  memory_size   = 128
+
+  filename         = data.archive_file.enqueue_zip.output_path
+  source_code_hash = data.archive_file.enqueue_zip.output_base64sha256
+
+  environment {
+    variables = {
+      QUEUE_URL = aws_sqs_queue.campaigns_queue.url
+    }
+  }
+}
+
+data "archive_file" "enqueue_zip" {
+  type        = "zip"
+  output_path = "${path.module}/enqueue.zip"
+
+  source {
+    content  = <<-EOF
+import json
+import os
+import boto3
+
+sqs = boto3.client('sqs')
+QUEUE_URL = os.environ['QUEUE_URL']
+
+def lambda_handler(event, context):
+    body = event.get('body', '{}')
+    if event.get('isBase64Encoded'):
+        import base64
+        body = base64.b64decode(body).decode('utf-8')
+
+    response = sqs.send_message(QueueUrl=QUEUE_URL, MessageBody=body)
+
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json'},
+        'body': json.dumps({'status': 'queued', 'messageId': response['MessageId']})
+    }
+EOF
+    filename = "enqueue.py"
+  }
+}
+
+# IAM policy for enqueue Lambda to send to SQS
+resource "aws_iam_role_policy" "enqueue_sqs_send" {
+  name = "${var.function_name}-enqueue-sqs-send"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = "sqs:SendMessage"
+      Resource = aws_sqs_queue.campaigns_queue.arn
+    }]
+  })
+}
+
+# Function URL for enqueue Lambda (this is the HTTP endpoint users will call)
+resource "aws_lambda_function_url" "enqueue_url" {
+  function_name      = aws_lambda_function.enqueue.function_name
+  authorization_type = "NONE"
 }
