@@ -6,6 +6,7 @@ import time
 import requests
 
 from monday_client import create_item, upload_file_to_column
+from utils import to_slug
 from pipeline import (
     GenerationInput,
     TextGenerationPipeline,
@@ -81,7 +82,7 @@ def poll_all_images(client: PlacidClient, image_ids: dict, poll_interval: int = 
 
 def create_monday_row_for_batch(topic: str, batch_num: int) -> int:
     """Create a Monday row for one batch (3 images per row)."""
-    item_name = topic
+    item_name = to_slug(topic)
     column_values = {TEST_FIELD_COLUMN_ID: "auto-generated"}
     return create_item(MONDAY_API_KEY, MONDAY_BOARD_ID, item_name, column_values)
 
