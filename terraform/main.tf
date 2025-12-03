@@ -269,4 +269,10 @@ resource "aws_iam_role_policy" "enqueue_sqs_send" {
 resource "aws_lambda_function_url" "enqueue_url" {
   function_name      = aws_lambda_function.enqueue.function_name
   authorization_type = "NONE"
+
+  cors {
+    allow_origins = ["*"]
+    allow_methods = ["POST"]
+    allow_headers = ["content-type"]
+  }
 }
