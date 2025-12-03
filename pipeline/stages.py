@@ -13,33 +13,44 @@ class StageExecutor:
     def __init__(self, client: OpenAI, model: str = "gpt-5.1"):
         self.client = client
         self.model = model
+        self.total_input_tokens = 0
+        self.total_output_tokens = 0
 
-    def _call_openai(self, system_prompt: str, user_message: str) -> str:
+    def _call_openai(self, system_prompt: str, user_message: str, stage_name: str) -> str:
         """Make OpenAI API call and return response content."""
-        response = self.client.chat.completions.create(
+        response = self.client.responses.create(
             model=self.model,
-            messages=[
-                {"role": "system", "content": system_prompt},
+            input=[
+                {"role": "developer", "content": system_prompt},
                 {"role": "user", "content": user_message},
             ],
-            max_completion_tokens=2000,
-            temperature=0.7,
+            reasoning={"effort": "medium"},
         )
-        return response.choices[0].message.content.strip()
+
+        # Track tokens
+        usage = response.usage
+        input_tokens = usage.input_tokens
+        output_tokens = usage.output_tokens
+        self.total_input_tokens += input_tokens
+        self.total_output_tokens += output_tokens
+
+        print(f"  {stage_name}: input={input_tokens}, output={output_tokens}", flush=True)
+
+        return response.output_text.strip()
 
     def run_creator(self, input_data: GenerationInput) -> str:
         """
-        Stage 1: CREATOR - Generate initial 9 variations.
+        Stage 1: CREATOR - Generate initial 12 variations.
 
         Returns raw output (TSV format).
         """
         system_prompt = PromptLoader.creator()
-        user_message = f"{input_data.to_user_message()}\nPlease generate 9 TSV lines."
-        return self._call_openai(system_prompt, user_message)
+        user_message = f"{input_data.to_user_message()}\nPlease generate 12 TSV lines."
+        return self._call_openai(system_prompt, user_message, "CREATOR")
 
     def run_editor(self, input_data: GenerationInput, tsv_block: str) -> str:
         """
-        Stage 2: EDITOR - Refine the 9 variations.
+        Stage 2: EDITOR - Refine the 12 variations.
 
         Args:
             input_data: Original generation input.
@@ -49,11 +60,11 @@ class StageExecutor:
         """
         system_prompt = PromptLoader.editor()
         user_message = f"{input_data.to_user_message()}\n\n{tsv_block}"
-        return self._call_openai(system_prompt, user_message)
+        return self._call_openai(system_prompt, user_message, "EDITOR")
 
     def run_final_toucher(self, input_data: GenerationInput, tsv_block: str) -> str:
         """
-        Stage 3: FINAL TOUCHER - Final polish on the 9 variations.
+        Stage 3: FINAL TOUCHER - Final polish on the 12 variations.
 
         Args:
             input_data: Original generation input.
@@ -63,4 +74,8 @@ class StageExecutor:
         """
         system_prompt = PromptLoader.final_toucher()
         user_message = f"{input_data.to_user_message()}\n\n{tsv_block}"
-        return self._call_openai(system_prompt, user_message)
+        return self._call_openai(system_prompt, user_message, "FINAL_TOUCHER")
+
+    def get_token_totals(self) -> tuple[int, int]:
+        """Return (total_input_tokens, total_output_tokens)."""
+        return self.total_input_tokens, self.total_output_tokens

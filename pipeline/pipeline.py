@@ -17,11 +17,11 @@ class TextGenerationPipeline:
     Orchestrate 3-stage text generation: CREATOR -> EDITOR -> FINAL TOUCHER.
 
     Each stage:
-    1. CREATOR: Generates 9 initial text variations
+    1. CREATOR: Generates 12 initial text variations
     2. EDITOR: Refines and enforces rules
     3. FINAL TOUCHER: Final micro-polish
 
-    Output: 9 TextVariation objects with batch/color assignments.
+    Output: 12 TextVariation objects with batch/color assignments.
     """
 
     def __init__(self, openai_api_key: str, model: str = "gpt-5.1"):
@@ -37,7 +37,7 @@ class TextGenerationPipeline:
             max_retries: Max retries per stage on TSV parse failure.
 
         Returns:
-            PipelineResult with 9 TextVariations and raw outputs.
+            PipelineResult with 12 TextVariations and raw outputs.
 
         Raises:
             PipelineError: If any stage fails after retries.
@@ -79,6 +79,10 @@ class TextGenerationPipeline:
             TextVariation.from_index(row.index, row.text)
             for row in final_rows
         ]
+
+        # Log token totals
+        total_input, total_output = self.executor.get_token_totals()
+        print(f"Token totals: input={total_input}, output={total_output}", flush=True)
 
         return PipelineResult(
             variations=variations,
