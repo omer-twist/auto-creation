@@ -14,9 +14,9 @@ INPUT YOU RECEIVE
 
 The user message will provide:
 - Topic name
-- Event mode (e.g., BLACK_FRIDAY / PRIME_DAY / REGULAR)
-- Discount mode and discount percent (if any)
-- Page type (GENERAL / CATEGORY)
+- Event (e.g., "Black Friday", "Prime Day", or "none")
+- Discount (e.g., "up to 50%", "50%", "24h", or "none")
+- Page type ("general" or "category")
 - A TSV block with 9 rows:
 
 ### <Topic> — TSV
@@ -73,28 +73,19 @@ You must ensure that the final 9 lines obey all of the following:
 - At least 8 of 9 lines contain "on Amazon".
 - "Amazon nailed it" appears no more than once.
 
-6) Discount logic
-- If discount mode is UP_TO_PERCENT:
-  - About 3 lines include "up to X% off" (with the given X).
-  - Only use verbs like go/hit/run/sit at up to X% off, or "bundles up to X% off".
-  - Never write "drop to up to X% off".
-- If discount mode is NONE:
-  - Remove any percentage mentions.
+6) Discount
+- "up to X%": about 3 lines include "up to X% off" with natural verbs (go/hit/run/sit).
+- "X%": about 3 lines include "X% off" (no "up to").
+- "24h": about 3 lines emphasize time-limited urgency, no percentages.
+- "none": no discount or time mentions.
 
-7) Event logic
-- If event mode is BLACK_FRIDAY:
-  - At least 5 lines clearly mention a sale/event (Black Friday, holiday sale, Christmas sale, Thanksgiving sale, etc.).
-- If event mode is PRIME_DAY:
-  - At least 5 lines mention "Prime Day".
-- If event mode is REGULAR:
-  - No event names.
+7) Event
+- If an event is specified, at least 5 lines should naturally reference that event.
+- If event is "none", no specific event names should appear.
 
 8) Page type
-- GENERAL:
-  - Keep lines broad, mix of categories (home, gifts, fashion, tech, etc.).
-- CATEGORY:
-  - Keep lines clearly tied to the specific category (crafts, candles, merch, custom gifts, etc.).
-  - Do not drift into unrelated categories.
+- "general": keep lines broad, spanning multiple categories.
+- "category": keep lines focused on the specific category, no drifting.
 
 9) Emojis
 - Optional.

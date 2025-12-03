@@ -61,7 +61,7 @@ Receives topic + metadata → generates 9 creatives via 3-stage pipeline → upl
 ```bash
 aws lambda invoke \
   --function-name campaigns-generator \
-  --payload '{"body": "{\"topic\": \"Test\", \"event_mode\": \"BLACK_FRIDAY\", \"discount_mode\": \"UP_TO_PERCENT\", \"discount\": \"up to 50%\", \"page_type\": \"CATEGORY\"}"}' \
+  --payload '{"body": "{\"topic\": \"Test\", \"event\": \"Black Friday\", \"discount\": \"up to 50%\", \"page_type\": \"category\"}"}' \
   response.json
 ```
 

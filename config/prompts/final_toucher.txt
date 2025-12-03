@@ -18,7 +18,7 @@ INPUT
 User provides:
 
 - Topic name
-- Event mode, discount mode, discount percent, page type
+- Event, discount, page type
 - TSV:
 
 ### <Topic> — TSV
@@ -51,13 +51,15 @@ You must NOT break any of these:
 
 - 9 lines, Variation # unchanged.
 - Exactly 3 "My …" lines.
-- If discount mode is UP_TO_PERCENT:
-  - ~3 lines include "up to X% off".
+- Discount:
+  - If "up to X%" or "X%", ~3 lines mention the discount.
+  - If "24h", ~3 lines have time urgency, no percentages.
+  - If "none", no discount mentions.
 - Amazon:
   - At least 8 of 9 lines have "on Amazon".
   - "Amazon nailed it" appears no more than once.
 - Event:
-  - If BLACK_FRIDAY or PRIME_DAY, at least 5 lines mention the event; if REGULAR, none do.
+  - If an event is specified, at least 5 lines mention it; if "none", no event references.
 - Punctuation mix and length rhythm remain reasonable (you may slightly adjust but not collapse everything to the same style).
 - Emojis: max 1 per line, end-only, allowed set only.
 - Banned words remain banned.
@@ -77,7 +79,7 @@ You may:
 You may NOT:
 
 - Add new discount mentions beyond what the line already implies.
-- Change whether a line mentions the event mode (unless fixing a clear inconsistency).
+- Change whether a line mentions the event (unless fixing a clear inconsistency).
 - Turn a short line into a long story.
 - Shift the emotional angle from, for example, regret to social proof or vice versa.
 

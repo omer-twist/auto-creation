@@ -22,10 +22,9 @@ def run_single_topic(topic: str, index: int) -> dict:
     event = {
         "body": json.dumps({
             "topic": topic,
-            "event_mode": "BLACK_FRIDAY",
-            "discount_mode": "UP_TO_PERCENT",
+            "event": "Black Friday",
             "discount": "up to 50%",
-            "page_type": "CATEGORY",
+            "page_type": "category",
         })
     }
 

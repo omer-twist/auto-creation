@@ -1,45 +1,23 @@
 """Data models for the text generation pipeline."""
 
 from dataclasses import dataclass
-from enum import Enum
-
-
-class EventMode(Enum):
-    """Event/campaign mode for text generation."""
-    BLACK_FRIDAY = "BLACK_FRIDAY"
-    PRIME_DAY = "PRIME_DAY"
-    REGULAR = "REGULAR"
-
-
-class DiscountMode(Enum):
-    """Discount display mode."""
-    UP_TO_PERCENT = "UP_TO_PERCENT"
-    NONE = "NONE"
-
-
-class PageType(Enum):
-    """Page type for content targeting."""
-    GENERAL = "GENERAL"
-    CATEGORY = "CATEGORY"
 
 
 @dataclass
 class GenerationInput:
     """Input for the text generation pipeline."""
     topic: str
-    event_mode: EventMode
-    discount_mode: DiscountMode
-    discount: str | None  # e.g., "up to 50%"
-    page_type: PageType
+    event: str  # e.g., "Black Friday", "Prime Day", "none"
+    discount: str  # e.g., "up to 50%", "50%", "24h", "none"
+    page_type: str  # "general" or "category"
 
     def to_user_message(self) -> str:
         """Format as user message for OpenAI."""
         lines = [
             f"Topic: {self.topic}",
-            f"Event mode: {self.event_mode.value}",
-            f"Discount mode: {self.discount_mode.value}",
-            f"Discount: {self.discount or 'N/A'}",
-            f"Page type: {self.page_type.value}",
+            f"Event: {self.event}",
+            f"Discount: {self.discount}",
+            f"Page type: {self.page_type}",
         ]
         return "\n".join(lines)
 

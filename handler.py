@@ -7,9 +7,6 @@ import requests
 
 from monday_client import create_item, upload_file_to_column
 from pipeline import (
-    EventMode,
-    DiscountMode,
-    PageType,
     GenerationInput,
     TextGenerationPipeline,
 )
@@ -33,10 +30,9 @@ def parse_input(body: dict) -> GenerationInput:
     """Parse request body into GenerationInput."""
     return GenerationInput(
         topic=body["topic"],
-        event_mode=EventMode(body.get("event_mode", "REGULAR")),
-        discount_mode=DiscountMode(body.get("discount_mode", "NONE")),
-        discount=body.get("discount"),
-        page_type=PageType(body.get("page_type", "GENERAL")),
+        event=body.get("event", "none"),
+        discount=body.get("discount", "none"),
+        page_type=body.get("page_type", "general"),
     )
 
 
@@ -110,10 +106,9 @@ def lambda_handler(event, context):
     Input payload:
     {
         "topic": "Girls Bracelet Making Kit",
-        "event_mode": "BLACK_FRIDAY",
-        "discount_mode": "UP_TO_PERCENT",
+        "event": "Black Friday",
         "discount": "up to 50%",
-        "page_type": "CATEGORY"
+        "page_type": "category"
     }
 
     Output: 3 Monday rows with 9 images total (3 images per row, grouped by batch).
@@ -215,26 +210,24 @@ def lambda_handler(event, context):
 if __name__ == "__main__":
     import sys
 
-    if len(sys.argv) < 6:
-        print("Usage: python handler.py <topic> <event_mode> <discount_mode> <discount> <page_type>")
+    if len(sys.argv) < 5:
+        print("Usage: python handler.py <topic> <event> <discount> <page_type>")
         print()
         print("Arguments:")
-        print("  topic         - The topic/category name")
-        print("  event_mode    - BLACK_FRIDAY | PRIME_DAY | REGULAR")
-        print("  discount_mode - UP_TO_PERCENT | NONE")
-        print("  discount      - e.g., 'up to 50%' (use 'none' if no discount)")
-        print("  page_type     - GENERAL | CATEGORY")
+        print("  topic    - The topic/category name")
+        print("  event    - e.g., 'Black Friday', 'Prime Day', 'none'")
+        print("  discount - e.g., 'up to 50%', '50%', '24h', 'none'")
+        print("  page_type - general | category")
         print()
         print("Example:")
-        print('  python handler.py "Girls Bracelet Making Kit" BLACK_FRIDAY UP_TO_PERCENT "up to 50%" CATEGORY')
+        print('  python handler.py "Girls Bracelet Making Kit" "Black Friday" "up to 50%" category')
         sys.exit(1)
 
     test_input = {
         "topic": sys.argv[1],
-        "event_mode": sys.argv[2],
-        "discount_mode": sys.argv[3],
-        "discount": None if sys.argv[4].lower() == "none" else sys.argv[4],
-        "page_type": sys.argv[5],
+        "event": sys.argv[2],
+        "discount": sys.argv[3],
+        "page_type": sys.argv[4],
     }
 
     print("Running with input:")
