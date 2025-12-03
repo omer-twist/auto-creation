@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campaign Queue</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-card: #1e293b;
+      --bg-input: #334155;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --accent: #14b8a6;
+      --accent-hover: #0d9488;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --border: #475569;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: var(--text-primary);
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+    }
+
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .conditional-field {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
+    }
+
+    .conditional-field.visible {
+      max-height: 100px;
+      opacity: 1;
+      margin-top: 1rem;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s, opacity 0.2s;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg-primary);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+
+    .btn-add {
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 0.75rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr {
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    tbody td {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .cell-topic {
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .cell-actions {
+      text-align: center;
+    }
+
+    .btn-delete {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .btn-delete:hover {
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-secondary);
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .count {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    #status {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      display: none;
+    }
+
+    #status.visible {
+      display: block;
+    }
+
+    #status.info {
+      background: rgba(20, 184, 166, 0.1);
+      color: var(--accent);
+    }
+
+    #status.success {
+      background: rgba(34, 197, 94, 0.1);
+      color: #22c55e;
+    }
+
+    #status.error {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Campaign Queue</h1>
+
+    <div class="card">
+      <form id="campaign-form">
+        <div class="form-group">
+          <label for="topic">Topic</label>
+          <input type="text" id="topic" placeholder="e.g., Girls Bracelet Making Kit" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="page-type">Page Type</label>
+            <select id="page-type">
+              <option value="general">General</option>
+              <option value="category">Category</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="discount-type">Discount</label>
+            <select id="discount-type">
+              <option value="none">None</option>
+              <option value="constant">Constant</option>
+              <option value="upto">Up to</option>
+              <option value="24h">24h</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="discount-value-wrapper" class="conditional-field">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="discount-value">Discount %</label>
+            <input type="text" id="discount-value" placeholder="e.g., 20">
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-top: 1rem;">
+          <div class="form-group">
+            <label for="event-type">Event</label>
+            <select id="event-type">
+              <option value="none">None</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <div class="form-group" id="event-name-group" style="opacity: 0; pointer-events: none;">
+            <label for="event-name">Event Name</label>
+            <input type="text" id="event-name" placeholder="e.g., Black Friday">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-add">+ Add Campaign</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <table id="queue-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Topic</th>
+            <th>Type</th>
+            <th>Discount</th>
+            <th>Event</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="queue-body">
+        </tbody>
+      </table>
+      <div id="empty-state" class="empty-state">No campaigns queued</div>
+
+      <div class="footer">
+        <span id="count" class="count">0 campaigns queued</span>
+        <button id="send-btn" class="btn btn-primary" disabled>Send All</button>
+      </div>
+
+      <div id="status"></div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration
+    const LAMBDA_URL = "https://jt52dlnylltf7r4doiek2o6yyi0oecul.lambda-url.us-east-1.on.aws/";
+    const CHUNK_SIZE = 50;
+    const CHUNK_DELAY_MS = 200;
+
+    // State
+    let campaigns = [];
+
+    // DOM Elements
+    const form = document.getElementById('campaign-form');
+    const topicInput = document.getElementById('topic');
+    const pageTypeSelect = document.getElementById('page-type');
+    const discountTypeSelect = document.getElementById('discount-type');
+    const discountValueWrapper = document.getElementById('discount-value-wrapper');
+    const discountValueInput = document.getElementById('discount-value');
+    const eventTypeSelect = document.getElementById('event-type');
+    const eventNameGroup = document.getElementById('event-name-group');
+    const eventNameInput = document.getElementById('event-name');
+    const queueBody = document.getElementById('queue-body');
+    const emptyState = document.getElementById('empty-state');
+    const countSpan = document.getElementById('count');
+    const sendBtn = document.getElementById('send-btn');
+    const statusDiv = document.getElementById('status');
+
+    // Conditional field visibility
+    discountTypeSelect.addEventListener('change', () => {
+      const needsValue = ['constant', 'upto'].includes(discountTypeSelect.value);
+      discountValueWrapper.classList.toggle('visible', needsValue);
+      if (!needsValue) discountValueInput.value = '';
+    });
+
+    eventTypeSelect.addEventListener('change', () => {
+      const needsName = eventTypeSelect.value === 'custom';
+      eventNameGroup.style.opacity = needsName ? '1' : '0';
+      eventNameGroup.style.pointerEvents = needsName ? 'auto' : 'none';
+      if (!needsName) eventNameInput.value = '';
+    });
+
+    // Add campaign
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const topic = topicInput.value.trim();
+      if (!topic) return;
+
+      const campaign = {
+        topic,
+        pageType: pageTypeSelect.value,
+        discountType: discountTypeSelect.value,
+        discountValue: discountValueInput.value.trim(),
+        eventType: eventTypeSelect.value,
+        eventName: eventNameInput.value.trim()
+      };
+
+      campaigns.push(campaign);
+      renderTable();
+
+      // Reset form
+      topicInput.value = '';
+      discountTypeSelect.value = 'none';
+      discountValueWrapper.classList.remove('visible');
+      discountValueInput.value = '';
+      eventTypeSelect.value = 'none';
+      eventNameGroup.style.opacity = '0';
+      eventNameGroup.style.pointerEvents = 'none';
+      eventNameInput.value = '';
+      topicInput.focus();
+    });
+
+    // Delete campaign
+    function deleteCampaign(index) {
+      campaigns.splice(index, 1);
+      renderTable();
+    }
+
+    // Render table
+    function renderTable() {
+      queueBody.innerHTML = '';
+
+      campaigns.forEach((c, i) => {
+        const tr = document.createElement('tr');
+        tr.style.animationDelay = `${i * 0.05}s`;
+
+        const discount = formatDiscount(c);
+        const event = c.eventType === 'custom' ? c.eventName : '-';
+
+        tr.innerHTML = `
+          <td>${i + 1}</td>
+          <td class="cell-topic" title="${escapeHtml(c.topic)}">${escapeHtml(c.topic)}</td>
+          <td>${c.pageType}</td>
+          <td>${discount}</td>
+          <td>${escapeHtml(event)}</td>
+          <td class="cell-actions">
+            <button class="btn-delete" onclick="deleteCampaign(${i})">&times;</button>
+          </td>
+        `;
+        queueBody.appendChild(tr);
+      });
+
+      const count = campaigns.length;
+      emptyState.style.display = count === 0 ? 'block' : 'none';
+      countSpan.textContent = `${count} campaign${count !== 1 ? 's' : ''} queued`;
+      sendBtn.disabled = count === 0;
+    }
+
+    function formatDiscount(c) {
+      switch (c.discountType) {
+        case 'constant': return c.discountValue ? `${c.discountValue}%` : '-';
+        case 'upto': return c.discountValue ? `up to ${c.discountValue}%` : '-';
+        case '24h': return '24h';
+        default: return '-';
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Build payload for Lambda
+    function buildPayload(campaign) {
+      const payload = {
+        topic: campaign.topic,
+        page_type: campaign.pageType
+      };
+
+      // Discount
+      if (campaign.discountType === 'constant' && campaign.discountValue) {
+        payload.discount = `${campaign.discountValue}%`;
+      } else if (campaign.discountType === 'upto' && campaign.discountValue) {
+        payload.discount = `up to ${campaign.discountValue}%`;
+      } else if (campaign.discountType === '24h') {
+        payload.discount = '24h';
+      }
+      // If none, omit discount field
+
+      // Event
+      if (campaign.eventType === 'custom' && campaign.eventName) {
+        payload.event = campaign.eventName;
+      }
+      // If none, omit event field
+
+      return payload;
+    }
+
+    // Send all campaigns
+    sendBtn.addEventListener('click', sendAll);
+
+    async function sendAll() {
+      if (campaigns.length === 0) return;
+
+      sendBtn.disabled = true;
+      showStatus('info', `Sending 0/${campaigns.length}...`);
+
+      let sent = 0;
+      let failed = 0;
+      const errors = [];
+
+      // Process in chunks
+      for (let i = 0; i < campaigns.length; i += CHUNK_SIZE) {
+        const chunk = campaigns.slice(i, i + CHUNK_SIZE);
+
+        const results = await Promise.allSettled(
+          chunk.map(c => sendCampaign(c))
+        );
+
+        results.forEach((result, idx) => {
+          if (result.status === 'fulfilled') {
+            sent++;
+          } else {
+            failed++;
+            errors.push({ index: i + idx, error: result.reason });
+          }
+        });
+
+        showStatus('info', `Sending ${sent + failed}/${campaigns.length}...`);
+
+        // Delay between chunks (except after last chunk)
+        if (i + CHUNK_SIZE < campaigns.length) {
+          await sleep(CHUNK_DELAY_MS);
+        }
+      }
+
+      // Show results
+      if (failed === 0) {
+        showStatus('success', `All ${sent} campaigns sent successfully`);
+        campaigns = [];
+        renderTable();
+      } else {
+        showStatus('error', `Sent ${sent}, failed ${failed}. Check console for details.`);
+        console.error('Failed campaigns:', errors);
+        sendBtn.disabled = false;
+      }
+    }
+
+    async function sendCampaign(campaign) {
+      const response = await fetch(LAMBDA_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildPayload(campaign))
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      return response.json();
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function showStatus(type, message) {
+      statusDiv.className = `visible ${type}`;
+      statusDiv.textContent = message;
+    }
+
+    // Initial render
+    renderTable();
+  </script>
+</body>
+</html>
