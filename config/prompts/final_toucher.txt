@@ -59,7 +59,7 @@ You must NOT break any of these:
   - At least 8 of 9 lines have "on Amazon".
   - "Amazon nailed it" appears no more than once.
 - Event:
-  - If an event is specified, at least 5 lines mention it; if "none", no event references.
+  - If an event is specified, ensure the references feel authentic to that event's unique themes and cultural context. At least 5 lines should mention it; if "none", no event references.
 - Punctuation mix and length rhythm remain reasonable (you may slightly adjust but not collapse everything to the same style).
 - Emojis: about 6 of 9 lines should have one, max 1 per line, end-only, topic-related.
 - No periods at end of lines.

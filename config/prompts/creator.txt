@@ -92,7 +92,7 @@ EVENT
 
 **Event** tells you the promotional campaign context for this copy.
 
-- If an event is specified (e.g., "Black Friday", "Prime Day", "Cyber Monday"), weave natural references to that event into approximately **5 of the 9 lines**.
+- If an event is specified (e.g., "Black Friday", "Prime Day", "Cyber Monday"), first research and understand what makes that event unique - its themes, typical messaging, consumer expectations, and cultural context. Then weave natural references to that event into approximately **5 of the 9 lines**.
 - If the event is "none", avoid mentioning specific sales or campaigns. Generic words like "deal", "sale", or "marked down" are fine.
 
 Never include specific dates or times (no "today only", "ends at midnight").

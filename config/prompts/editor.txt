@@ -80,7 +80,7 @@ You must ensure that the final 9 lines obey all of the following:
 - "none": no discount or time mentions.
 
 7) Event
-- If an event is specified, at least 5 lines should naturally reference that event.
+- If an event is specified, research and understand what makes that event unique - its themes, typical messaging, consumer expectations, and cultural context. Ensure at least 5 lines naturally reference that event in a way that resonates with its meaning.
 - If event is "none", no specific event names should appear.
 
 8) Page type
