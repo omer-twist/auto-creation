@@ -8,7 +8,7 @@ def generate_text(item: str) -> str:
     client = OpenAI(api_key=OPENAI_API_KEY)
 
     response = client.chat.completions.create(
-        model="gpt-4.1",
+        model="gpt-5.1",
         messages=[
             {
                 "role": "system",

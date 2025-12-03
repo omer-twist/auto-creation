@@ -24,7 +24,7 @@ class TextGenerationPipeline:
     Output: 9 TextVariation objects with batch/color assignments.
     """
 
-    def __init__(self, openai_api_key: str, model: str = "gpt-4.1"):
+    def __init__(self, openai_api_key: str, model: str = "gpt-5.1"):
         self.client = OpenAI(api_key=openai_api_key)
         self.executor = StageExecutor(self.client, model)
 
