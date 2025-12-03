@@ -10,7 +10,7 @@ from .tsv_parser import TSVParser, TSVRow
 class StageExecutor:
     """Execute a single pipeline stage via OpenAI."""
 
-    def __init__(self, client: OpenAI, model: str = "gpt-4o-mini"):
+    def __init__(self, client: OpenAI, model: str = "gpt-4.1"):
         self.client = client
         self.model = model
 
