@@ -113,6 +113,11 @@ data "archive_file" "lambda_zip" {
     filename = "monday_client.py"
   }
 
+  source {
+    content  = file("${path.module}/../utils.py")
+    filename = "utils.py"
+  }
+
   # Pipeline module
   source {
     content  = file("${path.module}/../pipeline/__init__.py")
@@ -189,14 +194,14 @@ resource "aws_lambda_layer_version" "dependencies" {
   }
 }
 
-# SQS Event Source Mapping - triggers worker Lambda from queue with max 3 concurrent
+# SQS Event Source Mapping - triggers worker Lambda from queue with max 2 concurrent
 resource "aws_lambda_event_source_mapping" "sqs_trigger" {
   event_source_arn                   = aws_sqs_queue.campaigns_queue.arn
   function_name                      = aws_lambda_function.image_generator.arn
   batch_size                         = 1
   maximum_batching_window_in_seconds = 0
   scaling_config {
-    maximum_concurrency = 3  # MAX 3 CONCURRENT - this is the real queue limit
+    maximum_concurrency = 2  # MAX 2 CONCURRENT - this is the real queue limit
   }
 }
 

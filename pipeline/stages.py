@@ -22,7 +22,7 @@ class StageExecutor:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_message},
             ],
-            max_tokens=2000,
+            max_completion_tokens=2000,
             temperature=0.7,
         )
         return response.choices[0].message.content.strip()

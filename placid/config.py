@@ -44,6 +44,11 @@ COLOR_BATCHES: dict[int, list[ColorScheme]] = {
         ColorScheme("#FFD64F", "#000000"),  # Yellow - Black
         ColorScheme("#244168", "#FFFFFF"),  # Navy - White
     ],
+    4: [
+        ColorScheme("#E2A9F1", "#FFFFFF"),  # Lavender Pink - White
+        ColorScheme("#004AAD", "#FFFFFF"),  # Deep Blue - White
+        ColorScheme("#F49999", "#FFFFFF"),  # Salmon - White
+    ],
 }
 
 FONTS = [
@@ -80,7 +85,7 @@ def get_variant_by_index(batch_num: int, color_index: int) -> ImageVariant:
     Get a specific variant by batch number and color index.
 
     Args:
-        batch_num: Batch number (1, 2, or 3)
+        batch_num: Batch number (1, 2, 3, or 4)
         color_index: Color index within batch (0, 1, or 2)
 
     Returns:

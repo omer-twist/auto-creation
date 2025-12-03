@@ -21,7 +21,7 @@ class TSVParseError(Exception):
 class TSVParser:
     """Parse TSV output from pipeline stages."""
 
-    EXPECTED_ROWS = 9
+    EXPECTED_ROWS = 12
 
     @staticmethod
     def parse(content: str) -> list[TSVRow]:
@@ -35,9 +35,9 @@ class TSVParser:
         1    First variation text...
         2    Second variation text...
         ...
-        9    Ninth variation text...
+        12   Twelfth variation text...
 
-        Returns list of 9 TSVRow objects.
+        Returns list of 12 TSVRow objects.
         Raises TSVParseError if parsing fails.
         """
         rows: list[TSVRow] = []
@@ -67,21 +67,21 @@ class TSVParser:
             if match:
                 index = int(match.group(1))
                 text = match.group(2).strip()
-                if 1 <= index <= 9 and text:
+                if 1 <= index <= 12 and text:
                     rows.append(TSVRow(index=index, text=text))
 
-        # Validate we got exactly 9 rows
+        # Validate we got exactly 12 rows
         if len(rows) != TSVParser.EXPECTED_ROWS:
             raise TSVParseError(
                 f"Expected {TSVParser.EXPECTED_ROWS} rows, got {len(rows)}",
                 raw_output=content
             )
 
-        # Validate indices are 1-9
+        # Validate indices are 1-12
         indices = sorted(row.index for row in rows)
-        if indices != list(range(1, 10)):
+        if indices != list(range(1, 13)):
             raise TSVParseError(
-                f"Expected indices 1-9, got {indices}",
+                f"Expected indices 1-12, got {indices}",
                 raw_output=content
             )
 
@@ -99,7 +99,7 @@ class TSVParser:
         Variation #\tText
         1\t...
         ...
-        9\t...
+        12\t...
         """
         lines = [
             f"### {topic} — TSV",

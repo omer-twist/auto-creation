@@ -39,7 +39,7 @@ def parse_input(body: dict) -> GenerationInput:
 
 def submit_all_images(client: PlacidClient, variations: list) -> dict:
     """
-    Submit all 9 images at once. Returns {variation.index: image_id}.
+    Submit all 12 images at once. Returns {variation.index: image_id}.
     """
     image_ids = {}
     for variation in variations:
@@ -112,7 +112,7 @@ def lambda_handler(event, context):
         "page_type": "category"
     }
 
-    Output: 3 Monday rows with 9 images total (3 images per row, grouped by batch).
+    Output: 4 Monday rows with 12 images total (3 images per row, grouped by batch).
     """
     # Handle SQS event format
     if "Records" in event:
@@ -139,10 +139,10 @@ def lambda_handler(event, context):
         result = pipeline.run(input_data)
         print(f"Generated {len(result.variations)} text variations", flush=True)
 
-        # Step 3: Submit all 9 images at once
+        # Step 3: Submit all 12 images at once
         placid_client = PlacidClient(API_TOKEN, TEMPLATE_UUID)
 
-        print("Submitting all 9 images...", flush=True)
+        print("Submitting all 12 images...", flush=True)
         image_ids = submit_all_images(placid_client, result.variations)
 
         # Step 4: Poll all images until done (20s intervals)
@@ -153,7 +153,7 @@ def lambda_handler(event, context):
         created_rows = []
         errors = []
 
-        for batch_num in [1, 2, 3]:
+        for batch_num in [1, 2, 3, 4]:
             print(f"Creating Monday row for batch {batch_num}...", flush=True)
 
             batch_variations = [
@@ -201,6 +201,7 @@ def lambda_handler(event, context):
         }
 
     except Exception as e:
+        print(f"ERROR: {e}", flush=True)
         return {
             "statusCode": 500,
             "body": json.dumps({"error": str(e)}),

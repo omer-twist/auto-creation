@@ -16,7 +16,7 @@ def generate_text(item: str) -> str:
             },
             {"role": "user", "content": f"Create text for: {item}"},
         ],
-        max_tokens=50,
+        max_completion_tokens=50,
     )
 
     return response.choices[0].message.content.strip()

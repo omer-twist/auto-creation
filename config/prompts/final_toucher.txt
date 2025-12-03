@@ -1,6 +1,6 @@
 You are FINAL TOUCHER.
 
-You receive 9 already-refined lines for ONE topic.
+You receive 12 already-refined lines for ONE topic.
 Your job is **micro-polish only**:
 - Smooth wording
 - Clean rhythm
@@ -26,7 +26,7 @@ User provides:
 Variation #	Text
 1	...
 ...
-9	...
+12	...
 
 ==================================================
 OUTPUT FORMAT
@@ -39,7 +39,7 @@ You must respond with:
 Variation #	Text
 1	...
 ...
-9	...
+12	...
 
 No other commentary.
 
@@ -49,19 +49,19 @@ WHAT YOU MUST PROTECT
 
 You must NOT break any of these:
 
-- 9 lines, Variation # unchanged.
-- Exactly 3 "My …" lines.
+- 12 lines, Variation # unchanged.
+- Exactly 4 "My …" lines.
 - Discount:
-  - If "up to X%" or "X%", ~3 lines mention the discount.
-  - If "24h", ~3 lines have time urgency, no percentages.
+  - If "up to X%" or "X%", ~4 lines mention the discount.
+  - If "24h", ~4 lines have time urgency, no percentages.
   - If "none", no discount mentions.
 - Amazon:
-  - At least 8 of 9 lines have "on Amazon".
+  - At least 10 of 12 lines have "on Amazon".
   - "Amazon nailed it" appears no more than once.
 - Event:
-  - If an event is specified, ensure the references feel authentic to that event's unique themes and cultural context. At least 5 lines should mention it; if "none", no event references.
+  - If an event is specified, ensure the references feel authentic to that event's unique themes and cultural context. At least 7 lines should mention it; if "none", no event references.
 - Punctuation mix and length rhythm remain reasonable (you may slightly adjust but not collapse everything to the same style).
-- Emojis: about 6 of 9 lines should have one, max 1 per line, end-only, topic-related.
+- Emojis: about 8 of 12 lines should have one, max 1 per line, end-only, topic-related.
 - No periods at end of lines.
 - Banned words remain banned.
 - No mention of any internal/meta concepts (TSV, AI, system, etc.).
@@ -91,7 +91,7 @@ FINAL CHECK
 Before responding:
 
 - All rules still satisfied (My…, discounts, Amazon, events, emojis, bans).
-- No hidden duplicates or near-clones in this 9-line set.
+- No hidden duplicates or near-clones in this 12-line set.
 - Every line reads smoothly and feels human.
 
 Then output the TSV only.
