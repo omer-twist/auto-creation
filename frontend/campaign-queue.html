@@ -176,6 +176,14 @@
       margin-top: 0.5rem;
     }
 
+    #send-btn {
+      background: #10b981;
+    }
+
+    #send-btn:hover:not(:disabled) {
+      background: #059669;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -215,15 +223,25 @@
       text-align: center;
     }
 
-    .btn-delete {
+    .btn-action {
       background: transparent;
       border: none;
       color: var(--text-secondary);
-      font-size: 1.25rem;
+      font-size: 1rem;
       cursor: pointer;
       padding: 0.25rem 0.5rem;
       border-radius: 4px;
       transition: color 0.2s, background 0.2s;
+    }
+
+    .btn-edit span {
+      display: inline-block;
+      transform: rotate(135deg);
+    }
+
+    .btn-edit:hover {
+      color: var(--accent);
+      background: rgba(20, 184, 166, 0.1);
     }
 
     .btn-delete:hover {
@@ -535,6 +553,43 @@
       topicInput.focus();
     });
 
+    // Edit campaign - populate form and remove from table
+    function editCampaign(index) {
+      const campaign = campaigns[index];
+
+      // Populate form fields
+      topicInput.value = campaign.topic;
+      pageTypeSelect.value = campaign.pageType;
+      discountTypeSelect.value = campaign.discountType;
+
+      // Show discount field if needed
+      if (campaign.discountType === 'constant' || campaign.discountType === 'upto') {
+        discountValueInput.classList.add('visible');
+        discountValueInput.value = campaign.discountValue;
+      } else {
+        discountValueInput.classList.remove('visible');
+        discountValueInput.value = '';
+      }
+
+      eventTypeSelect.value = campaign.eventType;
+
+      // Show event field if needed
+      if (campaign.eventType === 'custom') {
+        eventNameInput.classList.add('visible');
+        eventNameInput.value = campaign.eventName;
+      } else {
+        eventNameInput.classList.remove('visible');
+        eventNameInput.value = '';
+      }
+
+      // Remove from array and re-render
+      campaigns.splice(index, 1);
+      renderTable();
+
+      // Focus topic field
+      topicInput.focus();
+    }
+
     // Delete campaign
     function deleteCampaign(index) {
       campaigns.splice(index, 1);
@@ -559,7 +614,8 @@
           <td>${discount}</td>
           <td>${escapeHtml(event)}</td>
           <td class="cell-actions">
-            <button class="btn-delete" onclick="deleteCampaign(${i})">&times;</button>
+            <button class="btn-action btn-edit" onclick="editCampaign(${i})"><span>&#9999;</span></button>
+            <button class="btn-action btn-delete" onclick="deleteCampaign(${i})">&times;</button>
           </td>
         `;
         queueBody.appendChild(tr);
