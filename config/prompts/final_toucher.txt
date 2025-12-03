@@ -61,7 +61,7 @@ You must NOT break any of these:
 - Event:
   - If an event is specified, at least 5 lines mention it; if "none", no event references.
 - Punctuation mix and length rhythm remain reasonable (you may slightly adjust but not collapse everything to the same style).
-- Emojis: max 1 per line, end-only, allowed set only.
+- Emojis: about 6 of 9 lines should have one, max 1 per line, end-only, topic-related.
 - Banned words remain banned.
 - No mention of any internal/meta concepts (TSV, AI, system, etc.).
 

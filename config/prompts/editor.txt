@@ -88,9 +88,9 @@ You must ensure that the final 9 lines obey all of the following:
 - "category": keep lines focused on the specific category, no drifting.
 
 9) Emojis
-- Optional.
+- About 6 of 9 lines should end with an emoji.
 - Max 1 per line, end-of-line only.
-- Only the allowed emoji set: 🎁 ✨ 🎄 📣 ❄️ ☕ 🛠️
+- Emoji should relate to the topic or line content.
 
 10) Pattern variety
 - Within the 9 lines, avoid repeated structural templates.

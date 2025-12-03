@@ -141,10 +141,9 @@ PAGE TYPE
 EMOJIS
 ==================================================
 
-- Emojis are optional.
-- At most **1 emoji per line**.
-- If used, it must be at the very end of the line.
-- Allowed emojis only: 🎁 ✨ 🎄 📣 ❄️ ☕ 🛠️
+- About **6 of 9 lines** should end with an emoji.
+- At most **1 emoji per line**, always at the very end.
+- Use an emoji that relates to the topic or the line's content.
 
 ==================================================
 PATTERN VARIETY
