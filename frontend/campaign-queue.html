@@ -69,7 +69,7 @@
       color: var(--text-secondary);
     }
 
-    .form-row .input-area {
+    .form-row > .input-area {
       flex: 1;
       display: flex;
       gap: 0.5rem;
@@ -115,6 +115,35 @@
       padding: 0.75rem 1rem;
       border: 1px solid var(--border);
       opacity: 1;
+    }
+
+    /* Validation errors */
+    .form-row .input-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-row .input-wrapper .input-area {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .form-row .error-message {
+      font-size: 0.75rem;
+      color: var(--danger);
+      margin-top: 0.25rem;
+      margin-bottom: 0.5rem;
+      display: none;
+    }
+
+    .form-row .error-message.visible {
+      display: block;
+    }
+
+    .form-row input.invalid,
+    .form-row select.invalid {
+      border-color: var(--danger);
     }
 
     .btn {
@@ -269,42 +298,55 @@
       <form id="campaign-form">
         <div class="form-row">
           <label for="topic">Topic</label>
-          <div class="input-area">
-            <input type="text" id="topic" placeholder="e.g., Girls Bracelet Making Kit" required>
+          <div class="input-wrapper">
+            <div class="input-area">
+              <input type="text" id="topic" placeholder="e.g., Girls Bracelet Making Kit">
+            </div>
+            <div class="error-message" id="topic-error"></div>
           </div>
         </div>
 
         <div class="form-row">
           <label for="page-type">Page Type</label>
-          <div class="input-area">
-            <select id="page-type">
-              <option value="general">General</option>
-              <option value="category">Category</option>
-            </select>
+          <div class="input-wrapper">
+            <div class="input-area">
+              <select id="page-type">
+                <option value="" selected>-- Select --</option>
+                <option value="general">General</option>
+                <option value="category">Category</option>
+              </select>
+            </div>
+            <div class="error-message" id="page-type-error"></div>
           </div>
         </div>
 
         <div class="form-row">
           <label for="discount-type">Discount</label>
-          <div class="input-area">
-            <select id="discount-type">
-              <option value="none">None</option>
-              <option value="constant">Constant</option>
-              <option value="upto">Up to</option>
-              <option value="24h">24h</option>
-            </select>
-            <input type="text" id="discount-value" class="conditional-input" placeholder="%">
+          <div class="input-wrapper">
+            <div class="input-area">
+              <select id="discount-type">
+                <option value="none">None</option>
+                <option value="constant">Constant</option>
+                <option value="upto">Up to</option>
+                <option value="24h">24h</option>
+              </select>
+              <input type="text" id="discount-value" class="conditional-input" placeholder="%">
+            </div>
+            <div class="error-message" id="discount-error"></div>
           </div>
         </div>
 
         <div class="form-row">
           <label for="event-type">Event</label>
-          <div class="input-area">
-            <select id="event-type">
-              <option value="none">None</option>
-              <option value="custom">Custom</option>
-            </select>
-            <input type="text" id="event-name" class="conditional-input" placeholder="e.g., Black Friday">
+          <div class="input-wrapper">
+            <div class="input-area">
+              <select id="event-type">
+                <option value="none">None</option>
+                <option value="custom">Custom</option>
+              </select>
+              <input type="text" id="event-name" class="conditional-input" placeholder="e.g., Black Friday">
+            </div>
+            <div class="error-message" id="event-error"></div>
           </div>
         </div>
 
@@ -361,28 +403,116 @@
     const sendBtn = document.getElementById('send-btn');
     const statusDiv = document.getElementById('status');
 
+    // Error elements
+    const topicError = document.getElementById('topic-error');
+    const pageTypeError = document.getElementById('page-type-error');
+    const discountError = document.getElementById('discount-error');
+    const eventError = document.getElementById('event-error');
+
+    // Validation functions
+    function validateTopic() {
+      const value = topicInput.value.trim();
+      if (!value) {
+        showError(topicInput, topicError, 'Topic is required');
+        return false;
+      }
+      clearError(topicInput, topicError);
+      return true;
+    }
+
+    function validatePageType() {
+      const value = pageTypeSelect.value;
+      if (!value) {
+        showError(pageTypeSelect, pageTypeError, 'Please select a page type');
+        return false;
+      }
+      clearError(pageTypeSelect, pageTypeError);
+      return true;
+    }
+
+    function validateDiscount() {
+      const type = discountTypeSelect.value;
+      if (type === 'constant' || type === 'upto') {
+        const value = discountValueInput.value.trim();
+        const num = parseInt(value, 10);
+        if (!value || isNaN(num) || num < 1 || num > 99) {
+          showError(discountValueInput, discountError, 'Enter a number between 1-99');
+          return false;
+        }
+      }
+      clearError(discountValueInput, discountError);
+      return true;
+    }
+
+    function validateEvent() {
+      const type = eventTypeSelect.value;
+      if (type === 'custom') {
+        const value = eventNameInput.value.trim();
+        if (!value) {
+          showError(eventNameInput, eventError, 'Event name is required');
+          return false;
+        }
+      }
+      clearError(eventNameInput, eventError);
+      return true;
+    }
+
+    function showError(input, errorDiv, message) {
+      input.classList.add('invalid');
+      errorDiv.textContent = message;
+      errorDiv.classList.add('visible');
+    }
+
+    function clearError(input, errorDiv) {
+      input.classList.remove('invalid');
+      errorDiv.classList.remove('visible');
+    }
+
+    function clearAllErrors() {
+      clearError(topicInput, topicError);
+      clearError(pageTypeSelect, pageTypeError);
+      clearError(discountValueInput, discountError);
+      clearError(eventNameInput, eventError);
+    }
+
+    function validateAll() {
+      clearAllErrors();
+      const results = [
+        validateTopic(),
+        validatePageType(),
+        validateDiscount(),
+        validateEvent()
+      ];
+      return results.every(r => r === true);
+    }
+
     // Conditional field visibility
     discountTypeSelect.addEventListener('change', () => {
       const needsValue = ['constant', 'upto'].includes(discountTypeSelect.value);
       discountValueInput.classList.toggle('visible', needsValue);
-      if (!needsValue) discountValueInput.value = '';
+      if (!needsValue) {
+        discountValueInput.value = '';
+        clearError(discountValueInput, discountError);
+      }
     });
 
     eventTypeSelect.addEventListener('change', () => {
       const needsName = eventTypeSelect.value === 'custom';
       eventNameInput.classList.toggle('visible', needsName);
-      if (!needsName) eventNameInput.value = '';
+      if (!needsName) {
+        eventNameInput.value = '';
+        clearError(eventNameInput, eventError);
+      }
     });
 
     // Add campaign
     form.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      const topic = topicInput.value.trim();
-      if (!topic) return;
+      if (!validateAll()) return;
 
       const campaign = {
-        topic,
+        topic: topicInput.value.trim(),
         pageType: pageTypeSelect.value,
         discountType: discountTypeSelect.value,
         discountValue: discountValueInput.value.trim(),
@@ -395,6 +525,7 @@
 
       // Reset form
       topicInput.value = '';
+      pageTypeSelect.value = '';
       discountTypeSelect.value = 'none';
       discountValueInput.classList.remove('visible');
       discountValueInput.value = '';
