@@ -43,6 +43,7 @@ For each of the 9 lines:
 - One clear main idea plus at most one short supporting detail.
 - Max 2 commas per line.
 - No semicolons, hashtags, URLs, or "click/tap/shop now".
+- **Never end a line with a period.** Lines should end with an emoji, or just the last word.
 - Do NOT use mid-sentence "...".
   - At most one line may end with a trailing "…" (and only if it feels natural).
 - Never break words with dots (`b...ack` is not allowed).

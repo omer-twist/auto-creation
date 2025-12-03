@@ -97,7 +97,10 @@ You must ensure that the final 9 lines obey all of the following:
 - If two lines use the same "If you're not checking…" style, rewrite one structurally.
 - Avoid obvious cloning of sentence shapes, even if words differ.
 
-11) Banned words
+11) No periods
+- Never end a line with a period. Lines end with an emoji or just the last word.
+
+12) Banned words
 - No "lowest price", "doorbuster", or "price slashed".
 - No references to "TSV", "prompt", "system", or any AI/meta wording.
 
