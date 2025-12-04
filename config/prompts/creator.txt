@@ -131,14 +131,20 @@ PAGE TYPE
 
 **Page type** clarifies whether the topic is a broad collection or a specific category.
 
-- "general" — The topic is broad (e.g., "Best deals", "Today's top picks").
+- "general" — The topic is broad (e.g., "Best Kids Deals", "Today's top picks").
   Write copy that spans multiple categories: home, fashion, tech, toys, gifts, etc.
   Do not lock into one specific product scenario.
-  Do NOT refer to the general topic as if it were a single product (e.g., "My sister talked about those best deals on Amazon" is wrong — nobody talks about "best deals" like it's a thing they saw).
+  - You don't need to use the exact topic name. Capture its essence naturally.
+    - BAD: "I bought for my kids awesome gifts on the Black Friday Best Kids Deals On Amazon"
+    - GOOD: "I bought my kids the best toys on Amazon's Black Friday sale"
+  - You CAN use the topic verbatim when it flows naturally:
+    - GOOD: "Amazon's Best Kids Deals page is a goldmine for parents"
 
 - "category" — The topic is a specific category (e.g., "Girls Bracelet Making Kit", "candles").
   Write copy focused on that category with realistic use cases and benefits.
   Brands may only be mentioned if they appear in the topic string.
+
+**For all page types:** When combining topic + event + Amazon, don't force them together awkwardly. They should flow as one coherent sentence that mentions all elements naturally.
 
 ==================================================
 KIDS PRODUCTS (PARENT PERSPECTIVE)

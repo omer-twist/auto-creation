@@ -84,8 +84,13 @@ You must ensure that the final 12 lines obey all of the following:
 - If event is "none", no specific event names should appear.
 
 8) Page type
-- "general": keep lines broad, spanning multiple categories. Do NOT refer to the general topic as if it were a single product (e.g., "My sister talked about those best deals" is wrong — nobody talks about "best deals" like it's a thing they saw).
+- "general": keep lines broad, spanning multiple categories.
+  - Don't force the exact topic name into sentences. Capture the essence naturally.
+    - BAD: "I bought for my kids awesome gifts on the Black Friday Best Kids Deals On Amazon"
+    - GOOD: "I bought my kids the best toys on Amazon's Black Friday sale"
+  - You CAN use the topic verbatim when it flows naturally (e.g., "Amazon's Best Kids Deals page is a goldmine").
 - "category": keep lines focused on the specific category, no drifting.
+- **All page types:** Topic + event + Amazon should flow together as one coherent sentence, not be awkwardly coupled.
 
 9) Kids products (parent perspective)
 - For kids/children's products (toys, games, kids' clothing, etc.), ensure lines are written from a **parent's perspective** buying for their child.

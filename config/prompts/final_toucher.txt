@@ -61,7 +61,8 @@ You must NOT break any of these:
 - Event:
   - If an event is specified, ensure the references feel authentic to that event's unique themes and cultural context. At least 7 lines should mention it; if "none", no event references.
 - Punctuation mix and length rhythm remain reasonable (you may slightly adjust but not collapse everything to the same style).
-- Page type "general": lines should not refer to the general topic as if it were a single product (nobody says "My sister talked about those best deals").
+- Page type "general": don't force the exact topic name — capture its essence naturally. You CAN use the topic verbatim when it fits (e.g., "Amazon's Best Kids Deals page is a goldmine").
+- All page types: topic + event + Amazon should flow as one coherent sentence, not awkwardly coupled.
 - Emojis: about 8 of 12 lines should have one, max 1 per line, end-only, topic-related.
 - No periods at end of lines.
 - Banned words remain banned.
