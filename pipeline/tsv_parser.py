@@ -1,14 +1,8 @@
 """Parse TSV output between pipeline stages."""
 
 import re
-from dataclasses import dataclass
 
-
-@dataclass
-class TSVRow:
-    """Single row from TSV output."""
-    index: int
-    text: str
+from .models import TSVRow
 
 
 class TSVParseError(Exception):

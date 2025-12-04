@@ -4,7 +4,7 @@ from openai import OpenAI
 
 from .models import GenerationInput
 from .prompt_loader import PromptLoader
-from .tsv_parser import TSVParser, TSVRow
+from .tsv_parser import TSVParser
 
 
 class StageExecutor:
