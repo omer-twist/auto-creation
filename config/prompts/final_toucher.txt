@@ -61,9 +61,12 @@ You must NOT break any of these:
 - Event:
   - If an event is specified, ensure the references feel authentic to that event's unique themes and cultural context. At least 7 lines should mention it; if "none", no event references.
 - Punctuation mix and length rhythm remain reasonable (you may slightly adjust but not collapse everything to the same style).
+- Page type "general": lines should not refer to the general topic as if it were a single product (nobody says "My sister talked about those best deals").
 - Emojis: about 8 of 12 lines should have one, max 1 per line, end-only, topic-related.
 - No periods at end of lines.
 - Banned words remain banned.
+- Kids products: lines must stay in parent's perspective (buying for their child). Kids discover toys elsewhere — parents find them on Amazon. Do not imply kids browse or shop on Amazon.
+- "Not me", "POV", "PSA" patterns must have a colon after them (e.g., "Not me:", "POV:", "PSA:").
 - No mention of any internal/meta concepts (TSV, AI, system, etc.).
 
 ==================================================
@@ -72,6 +75,7 @@ ALLOWED MICRO-EDITS
 
 You may:
 
+- Fix any word salad — sentences that don't make sense or have jumbled/nonsensical phrasing.
 - Swap an awkward phrase for a smoother one.
 - Shorten slightly overlong sentences while keeping the core idea.
 - Adjust a word or two to make wording feel more natural.

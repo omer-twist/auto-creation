@@ -80,8 +80,9 @@ Useful angles to mix across the 12 lines:
 - Regret or missed-out feeling.
 - Social proof (friends, family, neighbors, group chat).
 - "Calling all …" to address a clear segment.
-- POV: (max 1 per topic).
-- "Not me …" pattern: (max 1 per topic).
+- "POV:" pattern: (max 1 per topic). Must include the colon.
+- "PSA:" pattern: (max 1 per topic). Must include the colon.
+- "Not me:" pattern: (max 1 per topic). Must include the colon.
 - "This is your sign …": (max 1 per topic).
 
 Vary openings and wording so lines do not feel templated.
@@ -133,10 +134,30 @@ PAGE TYPE
 - "general" — The topic is broad (e.g., "Best deals", "Today's top picks").
   Write copy that spans multiple categories: home, fashion, tech, toys, gifts, etc.
   Do not lock into one specific product scenario.
+  Do NOT refer to the general topic as if it were a single product (e.g., "My sister talked about those best deals on Amazon" is wrong — nobody talks about "best deals" like it's a thing they saw).
 
 - "category" — The topic is a specific category (e.g., "Girls Bracelet Making Kit", "candles").
   Write copy focused on that category with realistic use cases and benefits.
   Brands may only be mentioned if they appear in the topic string.
+
+==================================================
+KIDS PRODUCTS (PARENT PERSPECTIVE)
+==================================================
+
+When the topic involves kids/children's products (toys, games, kids' clothing, etc.):
+
+- Write from a **parent's perspective** buying for their child.
+- Kids discover toys through friends, TV, videos, or stores — parents find them on Amazon.
+- Use angles like:
+  - "My kid saw this and won't stop asking"
+  - "Finally found what my daughter's been begging for"
+  - "The toy my son's friends all have"
+  - "This is what my nephew wants for his birthday"
+- Avoid implying kids browse or shop on Amazon themselves.
+- The "My …" openers should reflect parent/gift-buyer relationships when appropriate:
+  - "My daughter has been asking for…"
+  - "My nephew won't stop talking about…"
+  - "My kids saw this at their friend's house and now…"
 
 ==================================================
 EMOJIS

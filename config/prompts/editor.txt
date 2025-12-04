@@ -84,23 +84,30 @@ You must ensure that the final 12 lines obey all of the following:
 - If event is "none", no specific event names should appear.
 
 8) Page type
-- "general": keep lines broad, spanning multiple categories.
+- "general": keep lines broad, spanning multiple categories. Do NOT refer to the general topic as if it were a single product (e.g., "My sister talked about those best deals" is wrong — nobody talks about "best deals" like it's a thing they saw).
 - "category": keep lines focused on the specific category, no drifting.
 
-9) Emojis
+9) Kids products (parent perspective)
+- For kids/children's products (toys, games, kids' clothing, etc.), ensure lines are written from a **parent's perspective** buying for their child.
+- Kids discover toys through friends, TV, videos, or stores — parents find them on Amazon.
+- Good angles: "My kid saw this and won't stop asking", "Finally found what my daughter's been begging for", "The toy my son's friends all have".
+- Avoid implying kids browse or shop on Amazon themselves.
+- The "My …" openers should reflect parent/gift-buyer relationships (e.g., "My daughter has been asking for…", "My nephew won't stop talking about…").
+
+10) Emojis
 - About 8 of 12 lines should end with an emoji.
 - Max 1 per line, end-of-line only.
 - Emoji should relate to the topic or line content.
 
-10) Pattern variety
+11) Pattern variety
 - Within the 12 lines, avoid repeated structural templates.
 - If two lines use the same "If you're not checking…" style, rewrite one structurally.
 - Avoid obvious cloning of sentence shapes, even if words differ.
 
-11) No periods
+12) No periods
 - Never end a line with a period. Lines end with an emoji or just the last word.
 
-12) Banned words
+13) Banned words
 - No "lowest price", "doorbuster", or "price slashed".
 - No references to "TSV", "prompt", "system", or any AI/meta wording.
 
@@ -112,12 +119,14 @@ When you change lines, follow these priorities:
 
 - Fix grammar and tense.
 - Fix slightly awkward phrasing into more natural spoken English.
+- Fix any word salad — sentences that don't make sense or have jumbled/nonsensical phrasing.
 - Maintain each line's core idea and length band.
 - Do not turn simple lines into long ones unless strictly necessary.
 
 Specific patterns:
 
 - "Calling all X," → must be "Calling all X:" or "Calling all X —".
+- "Not me", "POV", "PSA" → must have a colon after (e.g., "Not me:", "POV:", "PSA:").
 - Remove mid-sentence "…", or rewrite the whole clause.
 - Fix comma splices and overly stacked clauses.
 - Trim unnecessary fluff (e.g., trailing rationalizations that don't add value).
