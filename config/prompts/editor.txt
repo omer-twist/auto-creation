@@ -76,7 +76,7 @@ You must ensure that the final 12 lines obey all of the following:
 6) Discount
 - "up to X%": about 4 lines include "up to X% off" with natural verbs (go/hit/run/sit).
 - "X%": about 4 lines include "X% off" (no "up to").
-- "24h": about 4 lines emphasize time-limited urgency, no percentages.
+- "24h": about 4 lines emphasize time-limited urgency using phrases like "grab this 24h deal", "grab it in the next 24h", "24h to grab this deal". No percentages.
 - "none": no discount or time mentions.
 
 7) Event

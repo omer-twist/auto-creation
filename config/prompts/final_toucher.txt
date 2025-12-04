@@ -53,7 +53,7 @@ You must NOT break any of these:
 - Exactly 4 "My …" lines.
 - Discount:
   - If "up to X%" or "X%", ~4 lines mention the discount.
-  - If "24h", ~4 lines have time urgency, no percentages.
+  - If "24h", ~4 lines have time urgency (e.g., "grab this 24h deal", "24h to grab this deal"), no percentages.
   - If "none", no discount mentions.
 - Amazon:
   - At least 10 of 12 lines have "on Amazon".

@@ -112,7 +112,7 @@ DISCOUNT
   This is a fixed discount — no "up to", just "50% off".
 
 - "24h" — Emphasize time-limited urgency in about 4 of 12 lines.
-  Use phrases like "today only", "24-hour deal", "limited time".
+  Use phrases like "grab this 24h deal", "grab it in the next 24h", "24h to grab this deal", "grab this deal — 24h only".
   Do not mention any percentages.
 
 - "none" — Do not mention any discount percentages or time limits.
