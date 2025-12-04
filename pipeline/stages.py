@@ -3,7 +3,7 @@
 from openai import OpenAI
 
 from .models import GenerationInput
-from .prompt_loader import PromptLoader
+from .prompt_loader import load_prompt
 from .tsv_parser import TSVParser
 
 
@@ -44,7 +44,7 @@ class StageExecutor:
 
         Returns raw output (TSV format).
         """
-        system_prompt = PromptLoader.creator()
+        system_prompt = load_prompt("creator")
         user_message = f"{input_data.to_user_message()}\nPlease generate 12 TSV lines."
         return self._call_openai(system_prompt, user_message, "CREATOR")
 
@@ -58,7 +58,7 @@ class StageExecutor:
 
         Returns raw output (TSV format).
         """
-        system_prompt = PromptLoader.editor()
+        system_prompt = load_prompt("editor")
         user_message = f"{input_data.to_user_message()}\n\n{tsv_block}"
         return self._call_openai(system_prompt, user_message, "EDITOR")
 
@@ -72,7 +72,7 @@ class StageExecutor:
 
         Returns raw output (TSV format).
         """
-        system_prompt = PromptLoader.final_toucher()
+        system_prompt = load_prompt("final_toucher")
         user_message = f"{input_data.to_user_message()}\n\n{tsv_block}"
         return self._call_openai(system_prompt, user_message, "FINAL_TOUCHER")
 
