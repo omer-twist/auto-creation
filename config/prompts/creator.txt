@@ -196,6 +196,7 @@ Do NOT use:
 - "lowest price"
 - "doorbuster"
 - "price slashed"
+- "rave" or "raving"
 
 Do NOT mention:
 - Any internal or technical words like "prompt", "TSV", "system", "API", "model", etc.

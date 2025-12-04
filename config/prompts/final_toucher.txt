@@ -65,7 +65,7 @@ You must NOT break any of these:
 - All page types: topic + event + Amazon should flow as one coherent sentence, not awkwardly coupled.
 - Emojis: about 8 of 12 lines should have one, max 1 per line, end-only, topic-related.
 - No periods at end of lines.
-- Banned words remain banned.
+- Banned words remain banned (including "rave"/"raving").
 - Kids products: lines must stay in parent's perspective (buying for their child). Kids discover toys elsewhere — parents find them on Amazon. Do not imply kids browse or shop on Amazon.
 - "Not me", "POV", "PSA" patterns must have a colon after them (e.g., "Not me:", "POV:", "PSA:").
 - No mention of any internal/meta concepts (TSV, AI, system, etc.).

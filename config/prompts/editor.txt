@@ -113,7 +113,7 @@ You must ensure that the final 12 lines obey all of the following:
 - Never end a line with a period. Lines end with an emoji or just the last word.
 
 13) Banned words
-- No "lowest price", "doorbuster", or "price slashed".
+- No "lowest price", "doorbuster", "price slashed", "rave", or "raving".
 - No references to "TSV", "prompt", "system", or any AI/meta wording.
 
 ==================================================
