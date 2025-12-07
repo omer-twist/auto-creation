@@ -1,11 +1,15 @@
+"""Placid API client."""
+
 import time
 
 import requests
 
-from .config import ImageVariant
+from services.styles import Style
 
 
 class PlacidClient:
+    """Low-level Placid API client."""
+
     def __init__(self, api_token: str, template_uuid: str):
         self.api_token = api_token
         self.template_uuid = template_uuid
@@ -42,7 +46,7 @@ class PlacidClient:
 
         return response
 
-    def submit_job(self, text: str, variant: ImageVariant) -> int | None:
+    def submit_job(self, text: str, style: Style) -> int | None:
         """Submit a single image job. Returns image_id or None on error."""
         url = f"{self.base_url}/{self.template_uuid}"
         headers = self._get_headers()
@@ -51,12 +55,12 @@ class PlacidClient:
             "create_now": False,
             "layers": {
                 "bg": {
-                    "background_color": variant.color_scheme.background_color,
+                    "background_color": style.background_color,
                 },
                 "text": {
                     "text": text,
-                    "text_color": variant.color_scheme.text_color,
-                    "font": variant.font.name,
+                    "text_color": style.text_color,
+                    "font": style.font,
                 },
             },
         }

@@ -1,25 +1,20 @@
-"""AWS Lambda handler for 3-stage text generation pipeline."""
+"""AWS Lambda handler for creative generation."""
 
 import json
-import time
 
 import requests
 
-from monday_client import create_item, upload_file_to_column
-from utils import to_slug
-from pipeline import (
-    GenerationInput,
-    TextGenerationPipeline,
-)
-from placid.client import PlacidClient
-from placid.config import (
-    API_TOKEN,
+from clients import LLMClient, PlacidClient, MondayClient
+from config import (
+    PLACID_API_TOKEN,
+    PLACID_TEMPLATE_UUID,
+    OPENAI_API_KEY,
     MONDAY_API_KEY,
     MONDAY_BOARD_ID,
-    OPENAI_API_KEY,
-    TEMPLATE_UUID,
-    get_variant_by_index,
 )
+from models import Topic
+from services import CreativeService
+from utils import to_slug
 
 
 # Monday column IDs
@@ -27,82 +22,9 @@ CREATIVES_COLUMN_ID = "file_mky7b1ww"
 TEST_FIELD_COLUMN_ID = "text_mky7650h"
 
 
-def parse_input(body: dict) -> GenerationInput:
-    """Parse request body into GenerationInput."""
-    return GenerationInput(
-        topic=body["topic"],
-        event=body.get("event", "none"),
-        discount=body.get("discount", "none"),
-        page_type=body.get("page_type", "general"),
-    )
-
-
-def submit_all_images(client: PlacidClient, variations: list) -> dict:
-    """
-    Submit all 12 images at once. Returns {variation.index: image_id}.
-    """
-    image_ids = {}
-    for variation in variations:
-        variant = get_variant_by_index(variation.batch_num, variation.color_index)
-        image_id = client.submit_job(variation.text, variant)
-        if not image_id:
-            raise Exception(f"Failed to submit image for variation {variation.index}")
-        image_ids[variation.index] = image_id
-        print(f"  Submitted variation {variation.index}", flush=True)
-    return image_ids
-
-
-def poll_all_images(client: PlacidClient, image_ids: dict, poll_interval: int = 20) -> dict:
-    """
-    Poll all images until all are done. Returns {variation.index: image_url}.
-    """
-    image_urls = {}
-    pending = set(image_ids.keys())
-
-    while pending:
-        # Wait before polling
-        print(f"  Waiting {poll_interval}s before polling {len(pending)} images...", flush=True)
-        time.sleep(poll_interval)
-
-        # Poll all pending images
-        for index in list(pending):
-            image_id = image_ids[index]
-            status, url, error = client.poll_job(image_id)
-
-            if status == "finished":
-                image_urls[index] = url
-                pending.remove(index)
-                print(f"  Variation {index} done", flush=True)
-            elif status == "error":
-                raise Exception(f"Placid error for variation {index}: {error}")
-            # else still pending, will retry next cycle
-
-    return image_urls
-
-
-def create_monday_row_for_batch(topic: str, batch_num: int) -> int:
-    """Create a Monday row for one batch (3 images per row)."""
-    item_name = to_slug(topic)
-    column_values = {TEST_FIELD_COLUMN_ID: "auto-generated"}
-    return create_item(MONDAY_API_KEY, MONDAY_BOARD_ID, item_name, column_values)
-
-
-def upload_image_to_row(item_id: int, image_url: str, index: int):
-    """Download and upload image to Monday row."""
-    response = requests.get(image_url, stream=True, timeout=30)
-    response.raise_for_status()
-    filename = f"creative_{index}.jpg"
-    upload_file_to_column(
-        MONDAY_API_KEY, item_id, CREATIVES_COLUMN_ID, response.content, filename
-    )
-
-
 def lambda_handler(event, context):
     """
     AWS Lambda handler - triggered by SQS or HTTP.
-
-    SQS event format: {"Records": [{"body": "{...}"}]}
-    HTTP event format: {"body": "{...}"}
 
     Input payload:
     {
@@ -112,14 +34,12 @@ def lambda_handler(event, context):
         "page_type": "category"
     }
 
-    Output: 4 Monday rows with 12 images total (3 images per row, grouped by batch).
+    Output: 4 Monday rows with 12 images total (3 images per row).
     """
     # Handle SQS event format
     if "Records" in event:
-        # SQS trigger - body is in Records[0].body
         body = json.loads(event["Records"][0]["body"])
     else:
-        # HTTP trigger (for local testing)
         body = json.loads(event.get("body", "{}"))
 
     # Validate required field
@@ -130,57 +50,58 @@ def lambda_handler(event, context):
         }
 
     try:
-        # Step 1: Parse input
-        input_data = parse_input(body)
-        print(f"Processing topic: {input_data.topic}", flush=True)
+        # Create topic
+        topic = Topic(
+            name=body["topic"],
+            event=body.get("event", "none"),
+            discount=body.get("discount", "none"),
+            page_type=body.get("page_type", "general"),
+        )
+        print(f"Processing topic: {topic.name}", flush=True)
 
-        # Step 2: Run 3-stage text pipeline
-        pipeline = TextGenerationPipeline(OPENAI_API_KEY)
-        result = pipeline.run(input_data)
-        print(f"Generated {len(result.variations)} text variations", flush=True)
+        # Generate creatives
+        llm_client = LLMClient(api_key=OPENAI_API_KEY)
+        placid_client = PlacidClient(PLACID_API_TOKEN, PLACID_TEMPLATE_UUID)
+        monday_client = MondayClient(MONDAY_API_KEY, MONDAY_BOARD_ID)
+        creative_service = CreativeService(llm_client, placid_client)
 
-        # Step 3: Submit all 12 images at once
-        placid_client = PlacidClient(API_TOKEN, TEMPLATE_UUID)
+        topic = creative_service.generate(topic)
+        print(f"Generated {len(topic.campaigns)} campaigns", flush=True)
 
-        print("Submitting all 12 images...", flush=True)
-        image_ids = submit_all_images(placid_client, result.variations)
-
-        # Step 4: Poll all images until done (20s intervals)
-        print("Polling for completion...", flush=True)
-        image_urls = poll_all_images(placid_client, image_ids, poll_interval=20)
-
-        # Step 5: Create Monday rows and upload (grouped by batch)
+        # Upload each campaign to Monday
         created_rows = []
         errors = []
 
-        for batch_num in [1, 2, 3, 4]:
-            print(f"Creating Monday row for batch {batch_num}...", flush=True)
-
-            batch_variations = [
-                v for v in result.variations if v.batch_num == batch_num
-            ]
+        for campaign_num, campaign in enumerate(topic.campaigns, start=1):
+            print(f"Creating Monday row for campaign {campaign_num}...", flush=True)
 
             try:
-                # Create 1 Monday row for this batch
-                item_id = create_monday_row_for_batch(input_data.topic, batch_num)
+                # Create row
+                item_name = to_slug(topic.name)
+                column_values = {TEST_FIELD_COLUMN_ID: "auto-generated"}
+                item_id = monday_client.create_item(item_name, column_values)
+                campaign.monday_item_id = item_id
 
-                # Upload all 3 images to this row
-                for variation in batch_variations:
-                    upload_image_to_row(item_id, image_urls[variation.index], variation.index)
+                # Upload images
+                for i, creative in enumerate(campaign.creatives):
+                    response = requests.get(creative.image_url, stream=True, timeout=30)
+                    response.raise_for_status()
+                    filename = f"creative_{campaign_num}_{i + 1}.jpg"
+                    monday_client.upload_file(item_id, CREATIVES_COLUMN_ID, response.content, filename)
 
                 created_rows.append({
-                    "batch": batch_num,
+                    "campaign": campaign_num,
                     "item_id": item_id,
-                    "images_uploaded": len(batch_variations),
-                    "texts": [v.text for v in batch_variations],
+                    "images_uploaded": len(campaign.creatives),
+                    "texts": [c.text for c in campaign.creatives],
                 })
 
             except Exception as e:
                 errors.append({
-                    "batch": batch_num,
+                    "campaign": campaign_num,
                     "error": str(e),
                 })
-                print(f"  Error on batch {batch_num}: {e}", flush=True)
+                print(f"  Error on campaign {campaign_num}: {e}", flush=True)
 
         # Determine response status
         if errors and not created_rows:
@@ -193,9 +114,9 @@ def lambda_handler(event, context):
         return {
             "statusCode": status_code,
             "body": json.dumps({
-                "topic": input_data.topic,
-                "rows_created": len(created_rows),
-                "rows": created_rows,
+                "topic": topic.name,
+                "campaigns_created": len(created_rows),
+                "campaigns": created_rows,
                 "errors": errors if errors else None,
             }),
         }
@@ -236,7 +157,6 @@ if __name__ == "__main__":
     print(json.dumps(test_input, indent=2))
     print()
 
-    # Simulate Lambda event
     event = {"body": json.dumps(test_input)}
 
     result = lambda_handler(event, None)
