@@ -55,18 +55,15 @@ You must NOT break any of these:
   - If "up to X%" or "X%", ~4 lines mention the discount.
   - If "24h", ~4 lines have time urgency (e.g., "grab this 24h deal", "24h to grab this deal"), no percentages.
   - If "none", no discount mentions.
-- Amazon:
-  - At least 10 of 12 lines have "on Amazon".
-  - "Amazon nailed it" appears no more than once.
 - Event:
   - If an event is specified, ensure the references feel authentic to that event's unique themes and cultural context. At least 7 lines should mention it; if "none", no event references.
 - Punctuation mix and length rhythm remain reasonable (you may slightly adjust but not collapse everything to the same style).
-- Page type "general": don't force the exact topic name — capture its essence naturally. You CAN use the topic verbatim when it fits (e.g., "Amazon's Best Kids Deals page is a goldmine").
-- All page types: topic + event + Amazon should flow as one coherent sentence, not awkwardly coupled.
+- Page type "general": don't force the exact topic name — capture its essence naturally.
+- All page types: topic + event should flow as one coherent sentence, not awkwardly coupled.
 - Emojis: about 8 of 12 lines should have one, max 1 per line, end-only, topic-related.
 - No periods at end of lines.
-- Banned words remain banned (including "rave"/"raving").
-- Kids products: lines must stay in parent's perspective (buying for their child). Kids discover toys elsewhere — parents find them on Amazon. Do not imply kids browse or shop on Amazon.
+- Banned words remain banned (including "Amazon", "rave"/"raving").
+- Kids products: lines must stay in parent's perspective (buying for their child). Kids discover toys elsewhere — parents are the ones who find and buy them. Do not imply kids browse or shop online.
 - "Not me", "POV", "PSA" patterns must have a colon after them (e.g., "Not me:", "POV:", "PSA:").
 - No mention of any internal/meta concepts (TSV, AI, system, etc.).
 
@@ -95,7 +92,7 @@ FINAL CHECK
 
 Before responding:
 
-- All rules still satisfied (My…, discounts, Amazon, events, emojis, bans).
+- All rules still satisfied (My…, discounts, events, emojis, bans).
 - No hidden duplicates or near-clones in this 12-line set.
 - Every line reads smoothly and feels human.
 

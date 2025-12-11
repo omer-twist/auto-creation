@@ -69,51 +69,44 @@ You must ensure that the final 12 lines obey all of the following:
 - About 4 plain sentences.
 (±1 tolerance where needed.)
 
-5) Amazon usage
-- At least 10 of 12 lines contain "on Amazon".
-- "Amazon nailed it" appears no more than once.
-
-6) Discount
+5) Discount
 - "up to X%": about 4 lines include "up to X% off" with natural verbs (go/hit/run/sit).
 - "X%": about 4 lines include "X% off" (no "up to").
 - "24h": about 4 lines emphasize time-limited urgency using phrases like "grab this 24h deal", "grab it in the next 24h", "24h to grab this deal". No percentages.
 - "none": no discount or time mentions.
 
-7) Event
+6) Event
 - If an event is specified, research and understand what makes that event unique - its themes, typical messaging, consumer expectations, and cultural context. Ensure at least 7 lines naturally reference that event in a way that resonates with its meaning.
 - If event is "none", no specific event names should appear.
 
-8) Page type
+7) Page type
 - "general": keep lines broad, spanning multiple categories.
   - Don't force the exact topic name into sentences. Capture the essence naturally.
-    - BAD: "I bought for my kids awesome gifts on the Black Friday Best Kids Deals On Amazon"
-    - GOOD: "I bought my kids the best toys on Amazon's Black Friday sale"
-  - You CAN use the topic verbatim when it flows naturally (e.g., "Amazon's Best Kids Deals page is a goldmine").
 - "category": keep lines focused on the specific category, no drifting.
-- **All page types:** Topic + event + Amazon should flow together as one coherent sentence, not be awkwardly coupled.
+- **All page types:** Topic + event should flow together as one coherent sentence, not be awkwardly coupled.
 
-9) Kids products (parent perspective)
+8) Kids products (parent perspective)
 - For kids/children's products (toys, games, kids' clothing, etc.), ensure lines are written from a **parent's perspective** buying for their child.
-- Kids discover toys through friends, TV, videos, or stores — parents find them on Amazon.
+- Kids discover toys through friends, TV, videos, or stores — parents are the ones who find and buy them.
 - Good angles: "My kid saw this and won't stop asking", "Finally found what my daughter's been begging for", "The toy my son's friends all have".
-- Avoid implying kids browse or shop on Amazon themselves.
+- Avoid implying kids browse or shop online themselves.
 - The "My …" openers should reflect parent/gift-buyer relationships (e.g., "My daughter has been asking for…", "My nephew won't stop talking about…").
 
-10) Emojis
+9) Emojis
 - About 8 of 12 lines should end with an emoji.
 - Max 1 per line, end-of-line only.
 - Emoji should relate to the topic or line content.
 
-11) Pattern variety
+10) Pattern variety
 - Within the 12 lines, avoid repeated structural templates.
 - If two lines use the same "If you're not checking…" style, rewrite one structurally.
 - Avoid obvious cloning of sentence shapes, even if words differ.
 
-12) No periods
+11) No periods
 - Never end a line with a period. Lines end with an emoji or just the last word.
 
-13) Banned words
-- No "lowest price", "doorbuster", "price slashed", "rave", or "raving".
+12) Banned words
+- No "Amazon" (in any form), "lowest price", "doorbuster", "price slashed", "rave", or "raving".
 - No references to "TSV", "prompt", "system", or any AI/meta wording.
 
 ==================================================
@@ -143,8 +136,8 @@ FINAL CHECK
 Before you respond:
 
 - 12 lines, Variation # preserved.
-- All constraints (My…, discounts, Amazon, event, emojis, bans) satisfied.
+- All constraints (My…, discounts, event, emojis, bans) satisfied.
 - Lines feel distinct yet cohesive.
-- Each line sounds like something a real person might say about Amazon.
+- Each line sounds like something a real person might say.
 
 Then output the TSV only.

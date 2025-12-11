@@ -63,7 +63,7 @@ VOICE & ANGLES
 ==================================================
 
 - First-person shopper voice: "I", "my", sometimes "we".
-- Tone: natural, conversational, a real person talking about Amazon finds.
+- Tone: natural, conversational, a real person talking about great finds.
 
 Required:
 
@@ -118,14 +118,6 @@ DISCOUNT
 - "none" — Do not mention any discount percentages or time limits.
 
 ==================================================
-AMAZON USAGE
-==================================================
-
-- At least **10 of the 12 lines** must contain "on Amazon".
-- You may occasionally start with "Amazon's …" if it fits.
-- You may close with "Amazon nailed it" in **at most 1 line** (and only where it feels natural).
-
-==================================================
 PAGE TYPE
 ==================================================
 
@@ -135,16 +127,12 @@ PAGE TYPE
   Write copy that spans multiple categories: home, fashion, tech, toys, gifts, etc.
   Do not lock into one specific product scenario.
   - You don't need to use the exact topic name. Capture its essence naturally.
-    - BAD: "I bought for my kids awesome gifts on the Black Friday Best Kids Deals On Amazon"
-    - GOOD: "I bought my kids the best toys on Amazon's Black Friday sale"
-  - You CAN use the topic verbatim when it flows naturally:
-    - GOOD: "Amazon's Best Kids Deals page is a goldmine for parents"
 
 - "category" — The topic is a specific category (e.g., "Girls Bracelet Making Kit", "candles").
   Write copy focused on that category with realistic use cases and benefits.
   Brands may only be mentioned if they appear in the topic string.
 
-**For all page types:** When combining topic + event + Amazon, don't force them together awkwardly. They should flow as one coherent sentence that mentions all elements naturally.
+**For all page types:** When combining topic + event, don't force them together awkwardly. They should flow as one coherent sentence that mentions all elements naturally.
 
 ==================================================
 KIDS PRODUCTS (PARENT PERSPECTIVE)
@@ -153,13 +141,13 @@ KIDS PRODUCTS (PARENT PERSPECTIVE)
 When the topic involves kids/children's products (toys, games, kids' clothing, etc.):
 
 - Write from a **parent's perspective** buying for their child.
-- Kids discover toys through friends, TV, videos, or stores — parents find them on Amazon.
+- Kids discover toys through friends, TV, videos, or stores — parents are the ones who find and buy them.
 - Use angles like:
   - "My kid saw this and won't stop asking"
   - "Finally found what my daughter's been begging for"
   - "The toy my son's friends all have"
   - "This is what my nephew wants for his birthday"
-- Avoid implying kids browse or shop on Amazon themselves.
+- Avoid implying kids browse or shop online themselves.
 - The "My …" openers should reflect parent/gift-buyer relationships when appropriate:
   - "My daughter has been asking for…"
   - "My nephew won't stop talking about…"
@@ -184,7 +172,6 @@ Within the 12 lines:
   - "If you're not checking…"
   - "This is your sign…"
   - "Not me …"
-  - "<Topic> on Amazon: …" more than once.
 
 Lines should feel related but not copy-pasted templates.
 
@@ -193,6 +180,7 @@ BANNED WORDS / META
 ==================================================
 
 Do NOT use:
+- "Amazon" (in any form)
 - "lowest price"
 - "doorbuster"
 - "price slashed"
@@ -210,7 +198,6 @@ For the 12 lines:
 - 12 lines present, each with "Variation #" from 1 to 12.
 - Exactly 4 lines start with "My …".
 - About 4 lines include discount mentions if discount is not "none".
-- At least 10 lines contain "on Amazon".
 - If an event is specified (not "none"), event mentions are present at least 7 times.
 - Punctuation and length distribution respected.
 - No broken words or mid-line ellipses.
