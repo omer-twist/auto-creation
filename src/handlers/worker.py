@@ -13,13 +13,14 @@ from ..config import (
     OPENAI_API_KEY,
     MONDAY_API_KEY,
     MONDAY_BOARD_ID,
+    MONDAY_COL_DATE,
+    MONDAY_COL_SITE,
+    MONDAY_COL_CREATIVES,
+    MONDAY_COL_URL,
+    MONDAY_GROUP_ID,
+    MONDAY_SITE_VALUE,
 )
-from ..utils import to_slug
-
-
-# Monday column IDs
-CREATIVES_COLUMN_ID = "file_mky7b1ww"
-TEST_FIELD_COLUMN_ID = "text_mky7650h"
+from ..utils import to_slug, today_date
 
 
 def handler(event, context):
@@ -56,6 +57,7 @@ def handler(event, context):
             event=body.get("event", "none"),
             discount=body.get("discount", "none"),
             page_type=body.get("page_type", "general"),
+            url=body.get("url", ""),
         )
         print(f"Processing topic: {topic.name}", flush=True)
 
@@ -78,8 +80,12 @@ def handler(event, context):
             try:
                 # Create row
                 item_name = to_slug(topic.name)
-                column_values = {TEST_FIELD_COLUMN_ID: "auto-generated"}
-                item_id = monday_client.create_item(item_name, column_values)
+                column_values = {
+                    MONDAY_COL_DATE: {"date": today_date()},
+                    MONDAY_COL_SITE: MONDAY_SITE_VALUE,
+                    MONDAY_COL_URL: topic.url,
+                }
+                item_id = monday_client.create_item(item_name, column_values, MONDAY_GROUP_ID)
                 campaign.monday_item_id = item_id
 
                 # Upload images
@@ -87,7 +93,7 @@ def handler(event, context):
                     response = requests.get(creative.image_url, stream=True, timeout=30)
                     response.raise_for_status()
                     filename = f"creative_{campaign_num}_{i + 1}.jpg"
-                    monday_client.upload_file(item_id, CREATIVES_COLUMN_ID, response.content, filename)
+                    monday_client.upload_file(item_id, MONDAY_COL_CREATIVES, response.content, filename)
 
                 created_rows.append({
                     "campaign": campaign_num,

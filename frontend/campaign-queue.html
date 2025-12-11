@@ -325,6 +325,16 @@
         </div>
 
         <div class="form-row">
+          <label for="url">URL</label>
+          <div class="input-wrapper">
+            <div class="input-area">
+              <input type="text" id="url" placeholder="https://bestselling.today/...">
+            </div>
+            <div class="error-message" id="url-error"></div>
+          </div>
+        </div>
+
+        <div class="form-row">
           <label for="page-type">Page Type</label>
           <div class="input-wrapper">
             <div class="input-area">
@@ -378,6 +388,7 @@
           <tr>
             <th>#</th>
             <th>Topic</th>
+            <th>URL</th>
             <th>Type</th>
             <th>Discount</th>
             <th>Event</th>
@@ -410,6 +421,7 @@
     // DOM Elements
     const form = document.getElementById('campaign-form');
     const topicInput = document.getElementById('topic');
+    const urlInput = document.getElementById('url');
     const pageTypeSelect = document.getElementById('page-type');
     const discountTypeSelect = document.getElementById('discount-type');
     const discountValueInput = document.getElementById('discount-value');
@@ -423,6 +435,7 @@
 
     // Error elements
     const topicError = document.getElementById('topic-error');
+    const urlError = document.getElementById('url-error');
     const pageTypeError = document.getElementById('page-type-error');
     const discountError = document.getElementById('discount-error');
     const eventError = document.getElementById('event-error');
@@ -435,6 +448,26 @@
         return false;
       }
       clearError(topicInput, topicError);
+      return true;
+    }
+
+    function validateUrl() {
+      const value = urlInput.value.trim();
+      if (!value) {
+        showError(urlInput, urlError, 'URL is required');
+        return false;
+      }
+      try {
+        const url = new URL(value);
+        if (url.hostname !== 'bestselling.today' && url.hostname !== 'www.bestselling.today') {
+          showError(urlInput, urlError, 'URL must be from bestselling.today');
+          return false;
+        }
+      } catch {
+        showError(urlInput, urlError, 'Invalid URL format');
+        return false;
+      }
+      clearError(urlInput, urlError);
       return true;
     }
 
@@ -488,6 +521,7 @@
 
     function clearAllErrors() {
       clearError(topicInput, topicError);
+      clearError(urlInput, urlError);
       clearError(pageTypeSelect, pageTypeError);
       clearError(discountValueInput, discountError);
       clearError(eventNameInput, eventError);
@@ -497,6 +531,7 @@
       clearAllErrors();
       const results = [
         validateTopic(),
+        validateUrl(),
         validatePageType(),
         validateDiscount(),
         validateEvent()
@@ -531,6 +566,7 @@
 
       const campaign = {
         topic: topicInput.value.trim(),
+        url: urlInput.value.trim(),
         pageType: pageTypeSelect.value,
         discountType: discountTypeSelect.value,
         discountValue: discountValueInput.value.trim(),
@@ -543,6 +579,7 @@
 
       // Reset form
       topicInput.value = '';
+      urlInput.value = '';
       pageTypeSelect.value = '';
       discountTypeSelect.value = 'none';
       discountValueInput.classList.remove('visible');
@@ -559,6 +596,7 @@
 
       // Populate form fields
       topicInput.value = campaign.topic;
+      urlInput.value = campaign.url;
       pageTypeSelect.value = campaign.pageType;
       discountTypeSelect.value = campaign.discountType;
 
@@ -606,10 +644,12 @@
 
         const discount = formatDiscount(c);
         const event = c.eventType === 'custom' ? c.eventName : '-';
+        const urlPath = c.url ? new URL(c.url).pathname : '-';
 
         tr.innerHTML = `
           <td>${i + 1}</td>
           <td class="cell-topic" title="${escapeHtml(c.topic)}">${escapeHtml(c.topic)}</td>
+          <td class="cell-topic" title="${escapeHtml(c.url)}">${escapeHtml(urlPath)}</td>
           <td>${c.pageType}</td>
           <td>${discount}</td>
           <td>${escapeHtml(event)}</td>
@@ -646,6 +686,7 @@
     function buildPayload(campaign) {
       const payload = {
         topic: campaign.topic,
+        url: campaign.url,
         page_type: campaign.pageType
       };
 
