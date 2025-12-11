@@ -17,8 +17,10 @@ from ..config import (
     MONDAY_COL_SITE,
     MONDAY_COL_CREATIVES,
     MONDAY_COL_URL,
+    MONDAY_COL_CONTENT_MANAGER,
     MONDAY_GROUP_ID,
     MONDAY_SITE_VALUE,
+    MONDAY_CONTENT_MANAGER_VALUE,
 )
 from ..utils import to_slug, today_date
 
@@ -84,6 +86,7 @@ def handler(event, context):
                     MONDAY_COL_DATE: {"date": today_date()},
                     MONDAY_COL_SITE: MONDAY_SITE_VALUE,
                     MONDAY_COL_URL: topic.url,
+                    MONDAY_COL_CONTENT_MANAGER: MONDAY_CONTENT_MANAGER_VALUE,
                 }
                 item_id = monday_client.create_item(item_name, column_values, MONDAY_GROUP_ID)
                 campaign.monday_item_id = item_id

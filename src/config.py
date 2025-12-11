@@ -21,3 +21,4 @@ MONDAY_GROUP_ID = "topics"
 
 # Monday.com constant values
 MONDAY_SITE_VALUE = {"ids": [1]}  # "bst"
+MONDAY_CONTENT_MANAGER_VALUE = {"index": 1}  # "om"
