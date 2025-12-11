@@ -42,7 +42,7 @@ resource "aws_lambda_event_source_mapping" "worker_sqs" {
 resource "aws_lambda_function" "enqueue" {
   function_name = "${var.function_name}-enqueue"
   role          = aws_iam_role.lambda.arn
-  handler       = "index.handler"
+  handler       = "enqueue.handler"
   runtime       = "python3.11"
   timeout       = 10
   memory_size   = 128
@@ -60,32 +60,7 @@ resource "aws_lambda_function" "enqueue" {
 data "archive_file" "enqueue" {
   type        = "zip"
   output_path = "${path.module}/enqueue.zip"
-
-  source {
-    content  = <<-EOF
-import json
-import os
-import boto3
-
-sqs = boto3.client('sqs')
-QUEUE_URL = os.environ['QUEUE_URL']
-
-def handler(event, context):
-    body = event.get('body', '{}')
-    if event.get('isBase64Encoded'):
-        import base64
-        body = base64.b64decode(body).decode('utf-8')
-
-    response = sqs.send_message(QueueUrl=QUEUE_URL, MessageBody=body)
-
-    return {
-        'statusCode': 200,
-        'headers': {'Content-Type': 'application/json'},
-        'body': json.dumps({'status': 'queued', 'messageId': response['MessageId']})
-    }
-EOF
-    filename = "index.py"
-  }
+  source_file = "${path.module}/../src/handlers/enqueue.py"
 }
 
 # Function URL for enqueue (HTTP endpoint)

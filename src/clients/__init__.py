@@ -1,7 +1,7 @@
 """API clients for external services."""
 
 from .llm import LLMClient
-from .placid import PlacidClient
+from .creative import CreativeClient
 from .monday import MondayClient
 
-__all__ = ["LLMClient", "PlacidClient", "MondayClient"]
+__all__ = ["LLMClient", "CreativeClient", "MondayClient"]

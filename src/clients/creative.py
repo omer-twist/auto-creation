@@ -1,14 +1,14 @@
-"""Placid API client."""
+"""Creative generation client (Placid API)."""
 
 import time
 
 import requests
 
-from services.styles import Style
+from ..models.styles import Style
 
 
-class PlacidClient:
-    """Low-level Placid API client."""
+class CreativeClient:
+    """Client for generating creative images (via Placid API)."""
 
     def __init__(self, api_token: str, template_uuid: str):
         self.api_token = api_token

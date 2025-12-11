@@ -36,3 +36,13 @@ STYLES: list[Style] = [
 def get_styles() -> list[Style]:
     """Get all 12 style combinations."""
     return STYLES
+
+
+def get_style(index: int) -> Style:
+    """Get style by index (cycles if index >= len(STYLES))."""
+    return STYLES[index % len(STYLES)]
+
+
+def get_styles_for_count(count: int) -> list[Style]:
+    """Get N styles, cycling through pool if needed."""
+    return [get_style(i) for i in range(count)]

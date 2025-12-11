@@ -4,17 +4,17 @@ import json
 
 import requests
 
-from clients import LLMClient, PlacidClient, MondayClient
-from config import (
+from ..clients import LLMClient, CreativeClient, MondayClient
+from ..models import Topic
+from ..services import TopicService
+from ..config import (
     PLACID_API_TOKEN,
     PLACID_TEMPLATE_UUID,
     OPENAI_API_KEY,
     MONDAY_API_KEY,
     MONDAY_BOARD_ID,
 )
-from models import Topic
-from services import CreativeService
-from utils import to_slug
+from ..utils import to_slug
 
 
 # Monday column IDs
@@ -22,7 +22,7 @@ CREATIVES_COLUMN_ID = "file_mky7b1ww"
 TEST_FIELD_COLUMN_ID = "text_mky7650h"
 
 
-def lambda_handler(event, context):
+def handler(event, context):
     """
     AWS Lambda handler - triggered by SQS or HTTP.
 
@@ -61,11 +61,11 @@ def lambda_handler(event, context):
 
         # Generate creatives
         llm_client = LLMClient(api_key=OPENAI_API_KEY)
-        placid_client = PlacidClient(PLACID_API_TOKEN, PLACID_TEMPLATE_UUID)
+        creative_client = CreativeClient(PLACID_API_TOKEN, PLACID_TEMPLATE_UUID)
         monday_client = MondayClient(MONDAY_API_KEY, MONDAY_BOARD_ID)
-        creative_service = CreativeService(llm_client, placid_client)
+        topic_service = TopicService(llm_client, creative_client)
 
-        topic = creative_service.generate(topic)
+        topic = topic_service.generate(topic)
         print(f"Generated {len(topic.campaigns)} campaigns", flush=True)
 
         # Upload each campaign to Monday
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 5:
-        print("Usage: python handler.py <topic> <event> <discount> <page_type>")
+        print("Usage: python -m src.handlers.worker <topic> <event> <discount> <page_type>")
         print()
         print("Arguments:")
         print("  topic    - The topic/category name")
@@ -143,7 +143,7 @@ if __name__ == "__main__":
         print("  page_type - general | category")
         print()
         print("Example:")
-        print('  python handler.py "Girls Bracelet Making Kit" "Black Friday" "up to 50%" category')
+        print('  python -m src.handlers.worker "Girls Bracelet Making Kit" "Black Friday" "up to 50%" category')
         sys.exit(1)
 
     test_input = {
@@ -159,6 +159,6 @@ if __name__ == "__main__":
 
     event = {"body": json.dumps(test_input)}
 
-    result = lambda_handler(event, None)
+    result = handler(event, None)
     print("\nResult:")
     print(json.dumps(json.loads(result["body"]), indent=2))

@@ -4,8 +4,8 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from clients.llm import LLMClient
-from models import Topic
+from ..clients.llm import LLMClient
+from ..models import Topic
 
 
 PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
@@ -36,7 +36,7 @@ class TextService:
     def __init__(self, llm: LLMClient):
         self.llm = llm
 
-    def generate(self, topic: Topic, max_retries: int = 2) -> list[str]:
+    def generate_for_topic(self, topic: Topic, max_retries: int = 2) -> list[str]:
         """
         Generate 12 text variations for a topic.
 
