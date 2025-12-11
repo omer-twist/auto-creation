@@ -1,6 +1,6 @@
-# AI Tools - Creative Generation
+# Auto-Creation
 
-Generates marketing creatives for Amazon affiliate campaigns. Takes a topic and produces 12 styled images with copy, organized into 4 campaigns uploaded to Monday.com.
+Generates marketing creatives for affiliate campaigns. Takes a topic and produces 12 styled images with copy, organized into 4 campaigns uploaded to Monday.com.
 
 ## How It Works
 

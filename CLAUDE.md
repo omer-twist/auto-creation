@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Marketing creative generation system for Amazon affiliate campaigns. Takes a topic (e.g., "Girls Bracelet Making Kit") and generates 12 creatives (text + styled images) organized into 4 campaigns, then uploads to Monday.com.
+Marketing creative generation system for affiliate campaigns. Takes a topic (e.g., "Girls Bracelet Making Kit") and generates 12 creatives (text + styled images) organized into 4 campaigns, then uploads to Monday.com.
 
 ## Commands
 
