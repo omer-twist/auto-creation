@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..clients.llm import LLMClient
-from ..models import Topic
+from ..models import Product, Topic
 
 
 PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
@@ -36,16 +36,28 @@ class TextService:
     def __init__(self, llm: LLMClient):
         self.llm = llm
 
-    def generate_for_topic(self, topic: Topic, max_retries: int = 2) -> list[str]:
+    def generate_for_topic(
+        self,
+        topic: Topic,
+        products: list[Product] | None = None,
+        max_retries: int = 2,
+    ) -> list[str]:
         """
         Generate 12 text variations for a topic.
 
+        Args:
+            topic: The topic to generate for.
+            products: Optional list of products to inform 4 of 12 creatives.
+            max_retries: Max retries per stage.
+
         Returns list of 12 strings.
         """
-        creator_output = self._run_stage("creator", topic, None, max_retries)
+        # Pass products ONLY to creator stage
+        creator_output = self._run_stage("creator", topic, None, max_retries, products)
         creator_rows = self._parse_tsv(creator_output)
         creator_tsv = self._format_tsv(topic.name, creator_rows)
 
+        # Editor and final_toucher preserve what creator made
         editor_output = self._run_stage("editor", topic, creator_tsv, max_retries)
         editor_rows = self._parse_tsv(editor_output)
         editor_tsv = self._format_tsv(topic.name, editor_rows)
@@ -64,14 +76,15 @@ class TextService:
         topic: Topic,
         prev_tsv: str | None,
         max_retries: int,
+        products: list[Product] | None = None,
     ) -> str:
         """Run a stage: build message, call LLM, retry on parse failure."""
         print(f"=== STAGE: {stage_name.upper()} ===", flush=True)
 
         system_prompt = self._load_prompt(stage_name)
 
-        # Build user message
-        user_message = self._build_user_message(topic)
+        # Build user message (products only for creator stage)
+        user_message = self._build_user_message(topic, products)
         if prev_tsv:
             user_message = f"{user_message}\n\n{prev_tsv}"
         else:
@@ -91,14 +104,27 @@ class TextService:
 
         raise TextGenerationError(f"{stage_name} failed after {max_retries + 1} attempts: {last_error}")
 
-    def _build_user_message(self, topic: Topic) -> str:
-        """Build user message from topic."""
+    def _build_product_context(self, products: list[Product]) -> list[str]:
+        """Build product context lines for the user message."""
+        lines = ["", "Product Context (use in exactly 4 of 12 lines):"]
+        for p in products:
+            lines.append(f"- {p.name}")
+        return lines
+
+    def _build_user_message(
+        self,
+        topic: Topic,
+        products: list[Product] | None = None,
+    ) -> str:
+        """Build user message from topic and optional products."""
         lines = [
             f"Topic: {topic.name}",
             f"Event: {topic.event}",
             f"Discount: {topic.discount}",
             f"Page Type: {topic.page_type}",
         ]
+        if products:
+            lines.extend(self._build_product_context(products))
         return "\n".join(lines)
 
     def _load_prompt(self, stage_name: str) -> str:

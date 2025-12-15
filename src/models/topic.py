@@ -14,4 +14,5 @@ class Topic:
     discount: str
     page_type: str
     url: str = ""
+    product_urls: list[str] = field(default_factory=list)
     campaigns: list[Campaign] = field(default_factory=list)

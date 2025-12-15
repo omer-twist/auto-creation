@@ -135,6 +135,34 @@ PAGE TYPE
 **For all page types:** When combining topic + event, don't force them together awkwardly. They should flow as one coherent sentence that mentions all elements naturally.
 
 ==================================================
+PRODUCT CONTEXT (OPTIONAL)
+==================================================
+
+If "Product Context" is provided in the input:
+
+- Use these products in **exactly 4 of the 12 lines** (lines 9-12 recommended)
+- Other 8 lines remain general about the topic category
+
+Rules for using products:
+
+1) **Don't copy names verbatim.** "Friendship Bracelet Making Kit with 500+ Beads" → "that bracelet kit with hundreds of beads"
+
+2) **Understand what it IS.** A "DIY jewelry kit with letter beads" is for making personalized name bracelets - reference the activity.
+
+3) **Integrate smoothly.**
+   Bad: "This Friendship Bracelet Making Kit is on sale"
+   Good: "My daughter's been asking for that bracelet kit all her friends have"
+
+4) **Don't force every product.** Given 3 products, you might:
+   - 2 lines mentioning one product each
+   - 1 line combining two related products
+   - 1 line referencing a general theme from the products
+
+5) **Handle duplicates.** Two bracelet kits = one product type
+
+If NO product context is provided, generate all 12 lines as general category lines.
+
+==================================================
 KIDS PRODUCTS (PARENT PERSPECTIVE)
 ==================================================
 

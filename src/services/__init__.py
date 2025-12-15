@@ -1,7 +1,8 @@
 """Business logic services."""
 
 from .creative import CreativeService
-from .topic import TopicService
+from .product import ProductService
 from .text import TextService
+from .topic import TopicService
 
-__all__ = ["CreativeService", "TopicService", "TextService"]
+__all__ = ["CreativeService", "ProductService", "TextService", "TopicService"]
