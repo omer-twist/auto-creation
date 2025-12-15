@@ -6,7 +6,7 @@ from openai import OpenAI
 class LLMClient:
     """Generic LLM client. Currently uses OpenAI, interface is provider-agnostic."""
 
-    def __init__(self, api_key: str, model: str = "gpt-5.1"):
+    def __init__(self, api_key: str, model: str = "gpt-5.2"):
         self._client = OpenAI(api_key=api_key)
         self.model = model
         self.total_input_tokens = 0
