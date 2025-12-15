@@ -66,6 +66,7 @@ You must NOT break any of these:
 - Kids products: lines must stay in parent's perspective (buying for their child). Kids discover toys elsewhere — parents are the ones who find and buy them. Do not imply kids browse or shop online.
 - "Not me", "POV", "PSA" patterns must have a colon after them (e.g., "Not me:", "POV:", "PSA:").
 - No mention of any internal/meta concepts (TSV, AI, system, etc.).
+- Product references: If a line mentions a specific product type (kit, set, specific item), preserve this specificity. Do not revert to generic category language.
 
 ==================================================
 ALLOWED MICRO-EDITS

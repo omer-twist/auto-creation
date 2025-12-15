@@ -60,6 +60,7 @@ def handler(event, context):
             discount=body.get("discount", "none"),
             page_type=body.get("page_type", "general"),
             url=body.get("url", ""),
+            product_urls=body.get("product_urls", []),
         )
         print(f"Processing topic: {topic.name}", flush=True)
 
@@ -143,16 +144,20 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 5:
-        print("Usage: python -m src.handlers.worker <topic> <event> <discount> <page_type>")
+        print("Usage: python -m src.handlers.worker <topic> <event> <discount> <page_type> [product_urls_json]")
         print()
         print("Arguments:")
-        print("  topic    - The topic/category name")
-        print("  event    - e.g., 'Black Friday', 'Prime Day', 'none'")
-        print("  discount - e.g., 'up to 50%', '50%', '24h', 'none'")
-        print("  page_type - general | category")
+        print("  topic        - The topic/category name")
+        print("  event        - e.g., 'Black Friday', 'Prime Day', 'none'")
+        print("  discount     - e.g., 'up to 50%', '50%', '24h', 'none'")
+        print("  page_type    - general | category")
+        print("  product_urls - Optional JSON array of Amazon URLs")
         print()
         print("Example:")
         print('  python -m src.handlers.worker "Girls Bracelet Making Kit" "Black Friday" "up to 50%" category')
+        print()
+        print("Example with product URLs:")
+        print('  python -m src.handlers.worker "Girls Bracelet Making Kit" "Black Friday" "up to 50%" category \'["https://amazon.com/dp/B0xxx"]\'')
         sys.exit(1)
 
     test_input = {
@@ -161,6 +166,10 @@ if __name__ == "__main__":
         "discount": sys.argv[3],
         "page_type": sys.argv[4],
     }
+
+    # Parse optional product URLs
+    if len(sys.argv) > 5:
+        test_input["product_urls"] = json.loads(sys.argv[5])
 
     print("Running with input:")
     print(json.dumps(test_input, indent=2))

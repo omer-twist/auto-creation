@@ -44,6 +44,38 @@ class LLMClient:
 
         return response.output_text.strip()
 
+    def call_with_web_search(self, system_prompt: str, user_message: str, label: str = "") -> str:
+        """Make LLM call with web search enabled.
+
+        Args:
+            system_prompt: System/developer prompt.
+            user_message: User message.
+            label: Optional label for logging token usage.
+
+        Returns:
+            Response text content.
+        """
+        response = self._client.responses.create(
+            model=self.model,
+            tools=[{"type": "web_search_preview"}],
+            input=[
+                {"role": "developer", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+        )
+
+        # Track tokens
+        usage = response.usage
+        input_tokens = usage.input_tokens
+        output_tokens = usage.output_tokens
+        self.total_input_tokens += input_tokens
+        self.total_output_tokens += output_tokens
+
+        if label:
+            print(f"  {label}: input={input_tokens}, output={output_tokens}", flush=True)
+
+        return response.output_text.strip()
+
     def get_token_totals(self) -> tuple[int, int]:
         """Return accumulated (input, output) tokens."""
         return self.total_input_tokens, self.total_output_tokens

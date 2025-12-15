@@ -109,6 +109,11 @@ You must ensure that the final 12 lines obey all of the following:
 - No "Amazon" (in any form), "lowest price", "doorbuster", "price slashed", "rave", or "raving".
 - No references to "TSV", "prompt", "system", or any AI/meta wording.
 
+13) Product-informed lines
+- If lines 9-12 contain specific product references (kits, sets, specific item types), preserve these references.
+- Do not genericize product-specific lines back to general category language.
+- Ensure product mentions still flow naturally and don't sound forced.
+
 ==================================================
 REPAIR GUIDELINES
 ==================================================
