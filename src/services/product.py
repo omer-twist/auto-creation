@@ -66,8 +66,8 @@ class ProductService:
             seen_names = set()
 
             for item in data:
-                url = item.get("url", "")
-                name = item.get("name", "").strip()
+                url = item.get("url") or ""
+                name = (item.get("name") or "").strip()
 
                 if name and name.lower() not in seen_names:
                     products.append(Product(url=url, name=name))
