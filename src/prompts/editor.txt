@@ -71,6 +71,7 @@ You must ensure that the final 12 lines obey all of the following:
 
 5) Discount
 - "up to X%": about 4 lines include "up to X% off" with natural verbs (go/hit/run/sit).
+  ALWAYS say "up to X%", NEVER say "at X%" when discount mode is "up to".
 - "X%": about 4 lines include "X% off" (no "up to").
 - "24h": about 4 lines emphasize time-limited urgency using phrases like "grab this 24h deal", "grab it in the next 24h", "24h to grab this deal". No percentages.
 - "none": no discount or time mentions.
@@ -105,11 +106,17 @@ You must ensure that the final 12 lines obey all of the following:
 11) No periods
 - Never end a line with a period. Lines end with an emoji or just the last word.
 
-12) Banned words
-- No "Amazon" (in any form), "lowest price", "doorbuster", "price slashed", "rave", or "raving".
+12) Amazon mentions
+- Exactly 3 lines must include "Check out my Amazon Storefront".
+- All 12 lines must include Amazon in a compliant, natural way (destination info, not promotional branding).
+- Inspiration for the other 9 lines: "I've combed through Amazon", "Handpicked from Amazon", "Found these gems on Amazon".
+- Amazon mentions must be smooth and coherent, not forced.
+
+13) Banned words
+- No "lowest price", "doorbuster", "price slashed", "rave", or "raving".
 - No references to "TSV", "prompt", "system", or any AI/meta wording.
 
-13) Product-informed lines
+14) Product-informed lines
 - If lines 9-12 contain specific product references (kits, sets, specific item types), preserve these references.
 - Do not genericize product-specific lines back to general category language.
 - Ensure product mentions still flow naturally and don't sound forced.

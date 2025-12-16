@@ -106,6 +106,7 @@ DISCOUNT
 
 - "up to X%" (e.g., "up to 50%") — Include "up to X% off" in about 4 of 12 lines.
   Use natural phrasing like "go up to X% off", "hit up to X% off", "run up to X% off".
+  ALWAYS say "up to X%", NEVER say "at X%" when discount mode is "up to".
   Never write "drop to up to X% off".
 
 - "X%" (e.g., "50%") — Include "X% off" in about 4 of 12 lines.
@@ -204,11 +205,25 @@ Within the 12 lines:
 Lines should feel related but not copy-pasted templates.
 
 ==================================================
+AMAZON MENTIONS (REQUIRED)
+==================================================
+
+You MUST include "Amazon" in your lines — but only in compliant ways that inform users about the destination, not as primary promotional branding.
+
+Distribution across 12 lines:
+- **Exactly 3 lines**: Use "Check out my Amazon Storefront"
+- **Exactly 9 lines**: Use Amazon naturally, inspired by phrases like:
+  - "I've combed through Amazon"
+  - "Handpicked from Amazon"
+  - "Found these gems on Amazon"
+
+Integrate Amazon smoothly — it should feel natural and coherent, not forced or word-salad-y.
+
+==================================================
 BANNED WORDS / META
 ==================================================
 
 Do NOT use:
-- "Amazon" (in any form)
 - "lowest price"
 - "doorbuster"
 - "price slashed"
@@ -226,7 +241,10 @@ For the 12 lines:
 - 12 lines present, each with "Variation #" from 1 to 12.
 - Exactly 4 lines start with "My …".
 - About 4 lines include discount mentions if discount is not "none".
+- If discount is "up to X%", all discount mentions say "up to X%", never "at X%".
 - If an event is specified (not "none"), event mentions are present at least 7 times.
+- Exactly 3 lines include "Check out my Amazon Storefront".
+- All 12 lines include Amazon in a compliant, natural way.
 - Punctuation and length distribution respected.
 - No broken words or mid-line ellipses.
 - No duplicated angles or copy-paste templates.

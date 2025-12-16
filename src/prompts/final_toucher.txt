@@ -53,6 +53,7 @@ You must NOT break any of these:
 - Exactly 4 "My …" lines.
 - Discount:
   - If "up to X%" or "X%", ~4 lines mention the discount.
+  - If "up to X%", ALWAYS say "up to X%", NEVER say "at X%".
   - If "24h", ~4 lines have time urgency (e.g., "grab this 24h deal", "24h to grab this deal"), no percentages.
   - If "none", no discount mentions.
 - Event:
@@ -62,7 +63,8 @@ You must NOT break any of these:
 - All page types: topic + event should flow as one coherent sentence, not awkwardly coupled.
 - Emojis: about 8 of 12 lines should have one, max 1 per line, end-only, topic-related.
 - No periods at end of lines.
-- Banned words remain banned (including "Amazon", "rave"/"raving").
+- Amazon: Exactly 3 lines must have "Check out my Amazon Storefront". All 12 lines must include Amazon compliantly.
+- Banned words remain banned ("lowest price", "doorbuster", "price slashed", "rave"/"raving").
 - Kids products: lines must stay in parent's perspective (buying for their child). Kids discover toys elsewhere — parents are the ones who find and buy them. Do not imply kids browse or shop online.
 - "Not me", "POV", "PSA" patterns must have a colon after them (e.g., "Not me:", "POV:", "PSA:").
 - No mention of any internal/meta concepts (TSV, AI, system, etc.).

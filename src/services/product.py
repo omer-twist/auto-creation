@@ -8,16 +8,16 @@ from ..models.product import Product
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You fetch Amazon product information and return clean product names.
+SYSTEM_PROMPT = """You fetch Amazon product information and return short product names.
 
-Given URLs, visit each and extract the product name. Clean it:
-- Remove brand names (e.g., "PREBOX", "LEGO")
-- Remove age ranges like "for Girls Ages 6-12"
-- Remove gift phrases like "Perfect Gift for..."
-- Keep the essence: what the product actually IS
+Given URLs, visit each and extract the product name. Simplify to MAX 4 WORDS:
+- "Women's Christmas Printed Tunic Dress" → "Christmas Tunic Dress"
+- "Girls Jewelry Making Kit for Ages 6-12" → "Girls Jewelry Making Kit"
+- "Plus Size Glitter V-Neck Swing Dress" → "Glitter Swing Dress"
+- "Professional Chef Knife Set" → "Chef Knife Set"
 
 Return ONLY a JSON array, no other text:
-[{"url": "...", "name": "clean product name"}, ...]
+[{"url": "...", "name": "3-4 word name"}, ...]
 """
 
 
