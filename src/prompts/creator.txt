@@ -233,6 +233,48 @@ Do NOT mention:
 - Any internal or technical words like "prompt", "TSV", "system", "API", "model", etc.
 
 ==================================================
+CONSTRAINT DISTRIBUTION (CRITICAL)
+==================================================
+
+You have multiple quotas to satisfy across 12 lines. The goal is natural copy that ALSO hits quotas — not quota-stuffed lines that technically comply.
+
+**Plan before writing:**
+
+Before generating, mentally assign which lines will satisfy which quotas. Each line should carry 1-2 constraints naturally, not 3+ awkwardly stacked.
+
+**Never combine these in one line:**
+
+- "My [person] keeps saying/recommending..." + "Check out my Amazon Storefront"
+  → The two "my"s clash. "My partner keeps saying: Check out my Amazon Storefront" sounds like your partner is telling you to visit your own store.
+  → "Check out my Amazon Storefront" lines must be direct first-person statements, not quotes from others.
+
+- "My..." opener + product mention + discount + event
+  → Too many elements. Pick 1-2 per line.
+
+**Good distribution example (event + discount + products):**
+
+Line 1: "My..." opener + event mention
+Line 2: Plain Amazon mention + discount
+Line 3: "Check out my Amazon Storefront" (direct, simple)
+Line 4: Product reference + event
+Line 5: "My..." opener + product
+...
+
+**Natural language comes first:**
+
+Read each line aloud. If it sounds like someone cramming keywords into a sentence, redistribute the constraints. If redistribution still produces awkward lines, it's okay to slightly underdeliver on a soft quota (±1 on emoji count, punctuation mix, etc.) rather than produce unnatural copy.
+
+**Coherence check (anti-word-salad):**
+
+Every line must be ONE complete thought that a human would actually say. Before finalizing each line, verify:
+- If it starts with a quote setup ("My partner keeps saying:"), what follows must be a coherent quote that person would actually say
+- Dashes and colons must connect related ideas, not glue random fragments together
+- The line has ONE main message, not 3 fragments stitched together
+
+Hard constraints (never break): 12 lines, Amazon in all, "up to" wording for discounts, banned words.
+Soft constraints (±1 okay if needed for flow): emoji count, punctuation mix, length bands.
+
+==================================================
 FINAL SELF-CHECK (BEFORE RESPONDING)
 ==================================================
 
