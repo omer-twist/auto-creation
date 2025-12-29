@@ -12,11 +12,15 @@ resource "aws_lambda_function" "worker" {
 
   environment {
     variables = {
-      PLACID_API_TOKEN     = var.placid_api_token
-      PLACID_TEMPLATE_UUID = var.placid_template_uuid
-      OPENAI_API_KEY       = var.openai_api_key
-      MONDAY_API_KEY       = var.monday_api_key
-      MONDAY_BOARD_ID      = var.monday_board_id
+      PLACID_API_TOKEN                     = var.placid_api_token
+      PLACID_TEMPLATE_UUID                 = var.placid_template_uuid
+      OPENAI_API_KEY                       = var.openai_api_key
+      MONDAY_API_KEY                       = var.monday_api_key
+      MONDAY_BOARD_ID                      = var.monday_board_id
+      GEMINI_API_KEY                       = var.gemini_api_key
+      REMOVEBG_API_KEY                     = var.removebg_api_key
+      PLACID_PRODUCT_CLUSTER_TEMPLATE_UUID = var.placid_product_cluster_template_uuid
+      PLACID_PRODUCT_CLUSTER_TEMPLATE_UUID_WHITE = var.placid_product_cluster_template_uuid_white
     }
   }
 

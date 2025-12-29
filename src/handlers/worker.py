@@ -5,8 +5,10 @@ import json
 import requests
 
 from ..clients import LLMClient, CreativeClient, MondayClient
+from ..clients.gemini import GeminiClient
+from ..clients.removebg import RemoveBgClient
 from ..models import Topic
-from ..services import TopicService
+from ..services import TopicService, ProductImageService
 from ..config import (
     PLACID_API_TOKEN,
     PLACID_TEMPLATE_UUID,
@@ -21,6 +23,8 @@ from ..config import (
     MONDAY_GROUP_ID,
     MONDAY_SITE_VALUE,
     MONDAY_CONTENT_MANAGER_VALUE,
+    GEMINI_API_KEY,
+    REMOVEBG_API_KEY,
 )
 from ..utils import to_slug, today_date
 
@@ -54,6 +58,7 @@ def handler(event, context):
 
     try:
         # Create topic
+        creative_type = body.get("creative_type", "standard")
         topic = Topic(
             name=body["topic"],
             event=body.get("event", "none"),
@@ -61,16 +66,34 @@ def handler(event, context):
             page_type=body.get("page_type", "general"),
             url=body.get("url", ""),
             product_urls=body.get("product_urls", []),
+            creative_type=creative_type,
+            product_image_urls=body.get("product_image_urls", []),
+            main_lines=body.get("main_lines", []),
         )
-        print(f"Processing topic: {topic.name}", flush=True)
+        print(f"Processing topic: {topic.name} (creative_type={creative_type})", flush=True)
 
-        # Generate creatives
+        # Initialize clients
         llm_client = LLMClient(api_key=OPENAI_API_KEY)
         creative_client = CreativeClient(PLACID_API_TOKEN, PLACID_TEMPLATE_UUID)
         monday_client = MondayClient(MONDAY_API_KEY, MONDAY_BOARD_ID)
-        topic_service = TopicService(llm_client, creative_client)
 
-        topic = topic_service.generate(topic)
+        # Route by creative type
+        if creative_type == "product_cluster":
+            # Product cluster requires additional services
+            gemini_client = GeminiClient(api_key=GEMINI_API_KEY)
+            removebg_client = RemoveBgClient(api_key=REMOVEBG_API_KEY)
+            product_image_service = ProductImageService(
+                gemini_client=gemini_client,
+                removebg_client=removebg_client,
+                creative_client=creative_client,
+            )
+            topic_service = TopicService(llm_client, creative_client, product_image_service)
+            topic = topic_service.generate_product_cluster(topic)
+        else:
+            # Standard creative generation
+            topic_service = TopicService(llm_client, creative_client)
+            topic = topic_service.generate(topic)
+
         print(f"Generated {len(topic.campaigns)} campaigns", flush=True)
 
         # Upload each campaign to Monday
@@ -99,11 +122,20 @@ def handler(event, context):
                     filename = f"creative_{campaign_num}_{i + 1}.jpg"
                     monday_client.upload_file(item_id, MONDAY_COL_CREATIVES, response.content, filename)
 
+                # Build texts response based on creative type
+                if creative_type == "product_cluster":
+                    texts = [
+                        {"header": c.text, "main": c.text_secondary}
+                        for c in campaign.creatives
+                    ]
+                else:
+                    texts = [c.text for c in campaign.creatives]
+
                 created_rows.append({
                     "campaign": campaign_num,
                     "item_id": item_id,
                     "images_uploaded": len(campaign.creatives),
-                    "texts": [c.text for c in campaign.creatives],
+                    "texts": texts,
                 })
 
             except Exception as e:
@@ -144,20 +176,23 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 5:
-        print("Usage: python -m src.handlers.worker <topic> <event> <discount> <page_type> [product_urls_json]")
+        print("Usage: python -m src.handlers.worker <topic> <event> <discount> <page_type> [creative_type] [extra_json]")
         print()
         print("Arguments:")
-        print("  topic        - The topic/category name")
-        print("  event        - e.g., 'Black Friday', 'Prime Day', 'none'")
-        print("  discount     - e.g., 'up to 50%', '50%', '24h', 'none'")
-        print("  page_type    - general | category")
-        print("  product_urls - Optional JSON array of Amazon URLs")
+        print("  topic         - The topic/category name")
+        print("  event         - e.g., 'Black Friday', 'Prime Day', 'none'")
+        print("  discount      - e.g., 'up to 50%', '50%', '24h', 'none'")
+        print("  page_type     - general | category")
+        print("  creative_type - standard | product_cluster (default: standard)")
+        print("  extra_json    - JSON object with additional fields:")
+        print("                  Standard: {\"product_urls\": [...]}")
+        print("                  Product Cluster: {\"product_image_urls\": [8 URLs]}")
         print()
-        print("Example:")
+        print("Example (standard):")
         print('  python -m src.handlers.worker "Girls Bracelet Making Kit" "Black Friday" "up to 50%" category')
         print()
-        print("Example with product URLs:")
-        print('  python -m src.handlers.worker "Girls Bracelet Making Kit" "Black Friday" "up to 50%" category \'["https://amazon.com/dp/B0xxx"]\'')
+        print("Example (product cluster):")
+        print('  python -m src.handlers.worker "Girls Bracelet Making Kit" "Black Friday" "up to 50%" category product_cluster \'{"product_image_urls": ["url1", "url2", ..., "url8"]}\'')
         sys.exit(1)
 
     test_input = {
@@ -167,9 +202,14 @@ if __name__ == "__main__":
         "page_type": sys.argv[4],
     }
 
-    # Parse optional product URLs
+    # Parse optional creative_type
     if len(sys.argv) > 5:
-        test_input["product_urls"] = json.loads(sys.argv[5])
+        test_input["creative_type"] = sys.argv[5]
+
+    # Parse optional extra JSON (product_urls or product_image_urls)
+    if len(sys.argv) > 6:
+        extra = json.loads(sys.argv[6])
+        test_input.update(extra)
 
     print("Running with input:")
     print(json.dumps(test_input, indent=2))

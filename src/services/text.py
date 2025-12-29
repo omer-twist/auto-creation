@@ -30,6 +30,14 @@ class TSVRow:
     text: str
 
 
+@dataclass
+class TSVRowPaired:
+    """Single row from paired TSV output (header + main)."""
+    index: int
+    header: str
+    main_text: str
+
+
 class TextService:
     """Generate 12 text variations using 3-stage LLM pipeline."""
 
@@ -181,4 +189,130 @@ class TextService:
         ]
         for row in rows:
             lines.append(f"{row.index}\t{row.text}")
+        return '\n'.join(lines)
+
+    # ===== Product Cluster Text Generation =====
+
+    def generate_for_product_cluster(
+        self,
+        topic: Topic,
+        max_retries: int = 2,
+    ) -> list[tuple[str, str]]:
+        """
+        Generate 12 (header, main_text) pairs for Product Cluster creatives.
+
+        Args:
+            topic: The topic to generate for.
+            max_retries: Max retries per stage.
+
+        Returns:
+            List of 12 (header, main_text) tuples.
+        """
+        # Creator stage
+        creator_output = self._run_product_cluster_stage(
+            "product_cluster_creator", topic, None, max_retries
+        )
+        creator_rows = self._parse_paired_tsv(creator_output)
+        creator_tsv = self._format_paired_tsv(topic.name, creator_rows)
+
+        # Editor stage
+        editor_output = self._run_product_cluster_stage(
+            "product_cluster_editor", topic, creator_tsv, max_retries
+        )
+        editor_rows = self._parse_paired_tsv(editor_output)
+        editor_tsv = self._format_paired_tsv(topic.name, editor_rows)
+
+        # Final toucher stage
+        final_output = self._run_product_cluster_stage(
+            "product_cluster_final", topic, editor_tsv, max_retries
+        )
+        final_rows = self._parse_paired_tsv(final_output)
+
+        total_input, total_output = self.llm.get_token_totals()
+        print(f"Token totals: input={total_input}, output={total_output}", flush=True)
+
+        return [(row.header, row.main_text) for row in final_rows]
+
+    def _run_product_cluster_stage(
+        self,
+        stage_name: str,
+        topic: Topic,
+        prev_tsv: str | None,
+        max_retries: int,
+    ) -> str:
+        """Run a product cluster stage: build message, call LLM, retry on parse failure."""
+        print(f"=== STAGE: {stage_name.upper()} ===", flush=True)
+
+        system_prompt = self._load_prompt(stage_name)
+
+        # Build user message
+        user_message = self._build_user_message(topic)
+        if prev_tsv:
+            user_message = f"{user_message}\n\n{prev_tsv}"
+        else:
+            user_message = f"{user_message}\nPlease generate 12 TSV rows with Header and Main Text."
+
+        # Call with retry
+        last_error = None
+        for attempt in range(max_retries + 1):
+            try:
+                output = self.llm.call(system_prompt, user_message, label=stage_name.upper())
+                self._parse_paired_tsv(output)  # validate
+                return output
+            except TSVParseError as e:
+                last_error = e
+                if attempt < max_retries:
+                    print(f"  {stage_name} attempt {attempt + 1} failed: {e}. Retrying...", flush=True)
+
+        raise TextGenerationError(f"{stage_name} failed after {max_retries + 1} attempts: {last_error}")
+
+    def _parse_paired_tsv(self, content: str) -> list[TSVRowPaired]:
+        """Parse 3-column TSV content (Variation #, Header, Main Text)."""
+        rows: list[TSVRowPaired] = []
+        lines = content.strip().split('\n')
+
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+
+            # Skip markdown headers
+            if line.startswith('#'):
+                continue
+
+            # Skip TSV header row
+            lower = line.lower()
+            if 'variation' in lower and 'header' in lower:
+                continue
+
+            # Parse "number\theader\tmain_text"
+            parts = line.split('\t')
+            if len(parts) >= 3:
+                try:
+                    index = int(parts[0].strip())
+                    header = parts[1].strip()
+                    main_text = parts[2].strip()
+                    if 1 <= index <= 12 and header and main_text:
+                        rows.append(TSVRowPaired(index=index, header=header, main_text=main_text))
+                except ValueError:
+                    continue
+
+        if len(rows) != 12:
+            raise TSVParseError(f"Expected 12 rows, got {len(rows)}", raw_output=content)
+
+        indices = sorted(row.index for row in rows)
+        if indices != list(range(1, 13)):
+            raise TSVParseError(f"Expected indices 1-12, got {indices}", raw_output=content)
+
+        return sorted(rows, key=lambda r: r.index)
+
+    def _format_paired_tsv(self, topic: str, rows: list[TSVRowPaired]) -> str:
+        """Format paired rows as TSV for input to next stage."""
+        lines = [
+            f"### {topic} — TSV",
+            "",
+            "Variation #\tHeader\tMain Text",
+        ]
+        for row in rows:
+            lines.append(f"{row.index}\t{row.header}\t{row.main_text}")
         return '\n'.join(lines)

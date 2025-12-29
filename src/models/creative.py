@@ -12,3 +12,7 @@ class Creative:
     background_color: str
     text_color: str
     font: str
+    # Product cluster fields (optional)
+    text_secondary: str | None = None
+    text_color_secondary: str | None = None
+    product_image_url: str | None = None

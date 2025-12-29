@@ -3,10 +3,12 @@
 from ..clients.llm import LLMClient
 from ..clients.creative import CreativeClient
 from ..models import Campaign, Creative, Topic
-from ..models.styles import get_styles_for_count
+from ..models.styles import get_styles_for_count, get_product_cluster_styles_for_count
+from .. import config
 
 from .creative import CreativeService
 from .product import ProductService
+from .product_image import ProductImageService
 from .text import TextService
 
 
@@ -16,10 +18,16 @@ class TopicService:
     CAMPAIGNS_PER_TOPIC = 4
     CREATIVES_PER_CAMPAIGN = 3
 
-    def __init__(self, llm: LLMClient, creative_client: CreativeClient):
+    def __init__(
+        self,
+        llm: LLMClient,
+        creative_client: CreativeClient,
+        product_image_service: ProductImageService | None = None,
+    ):
         self.text_service = TextService(llm)
         self.creative_service = CreativeService(creative_client)
         self.product_service = ProductService(llm)
+        self.product_image_service = product_image_service
 
     def generate(self, topic: Topic) -> Topic:
         """
@@ -59,3 +67,63 @@ class TopicService:
             Campaign(creatives=creatives[i : i + self.CREATIVES_PER_CAMPAIGN])
             for i in range(0, len(creatives), self.CREATIVES_PER_CAMPAIGN)
         ]
+
+    # ===== Product Cluster Generation =====
+
+    def generate_product_cluster(self, topic: Topic) -> Topic:
+        """
+        Generate product cluster topic with all campaigns and creatives.
+
+        Creates a single cluster image from 8 product URLs, then:
+        - Generates 12 text pairs (header + main)
+        - Creates 12 creatives using the shared cluster image
+        - Groups into 4 campaigns of 3 creatives each
+
+        Returns the topic with campaigns populated.
+        """
+        if not self.product_image_service:
+            raise RuntimeError("ProductImageService required for product cluster generation")
+
+        if not topic.product_image_urls or len(topic.product_image_urls) != 8:
+            raise ValueError(f"Expected exactly 8 product image URLs, got {len(topic.product_image_urls or [])}")
+
+        total = self.CAMPAIGNS_PER_TOPIC * self.CREATIVES_PER_CAMPAIGN
+
+        # 1. Generate product cluster image (shared across all creatives)
+        print("=== GENERATING PRODUCT CLUSTER IMAGE ===", flush=True)
+        cluster_url = self.product_image_service.generate_cluster(topic.product_image_urls)
+
+        # 2. Generate text pairs (header + main_text)
+        if topic.main_lines and len(topic.main_lines) == 12:
+            # Use user-provided main lines (header = topic name)
+            print("=== USING PROVIDED MAIN LINES ===", flush=True)
+            text_pairs = [(topic.name, line) for line in topic.main_lines]
+        else:
+            # Generate via LLM
+            print("=== GENERATING TEXT PAIRS ===", flush=True)
+            text_pairs = self.text_service.generate_for_product_cluster(topic)
+
+        # 3. Get product cluster styles
+        styles = get_product_cluster_styles_for_count(total)
+
+        # 4. Generate all creatives (batched Placid calls)
+        print("=== GENERATING CREATIVES ===", flush=True)
+        template_uuid = config.PLACID_PRODUCT_CLUSTER_TEMPLATE_UUID
+        template_uuid_white = config.PLACID_PRODUCT_CLUSTER_TEMPLATE_UUID_WHITE
+        if not template_uuid:
+            raise RuntimeError("PLACID_PRODUCT_CLUSTER_TEMPLATE_UUID not configured")
+        if not template_uuid_white:
+            raise RuntimeError("PLACID_PRODUCT_CLUSTER_TEMPLATE_UUID_WHITE not configured")
+
+        creatives = self.creative_service.generate_product_cluster_batch(
+            text_pairs=text_pairs,
+            styles=styles,
+            product_image_url=cluster_url,
+            template_uuid=template_uuid,
+            template_uuid_white=template_uuid_white,
+        )
+
+        # 5. Group into campaigns
+        topic.campaigns = self._group_into_campaigns(creatives)
+
+        return topic

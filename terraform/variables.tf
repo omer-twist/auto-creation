@@ -37,3 +37,25 @@ variable "monday_board_id" {
   description = "Monday.com board ID"
   type        = string
 }
+
+variable "gemini_api_key" {
+  description = "Google Gemini API key for Nano Banana Pro"
+  type        = string
+  sensitive   = true
+}
+
+variable "removebg_api_key" {
+  description = "remove.bg API key for background removal"
+  type        = string
+  sensitive   = true
+}
+
+variable "placid_product_cluster_template_uuid" {
+  description = "Placid template UUID for product cluster creatives"
+  type        = string
+}
+
+variable "placid_product_cluster_template_uuid_white" {
+  description = "Placid template UUID for product cluster creatives with white text"
+  type        = string
+}

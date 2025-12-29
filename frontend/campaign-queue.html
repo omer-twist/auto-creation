@@ -471,6 +471,108 @@
       text-align: center;
       padding: 0.5rem;
     }
+
+    /* Product Image section (for Product Cluster) */
+    .product-images-section {
+      display: none;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: var(--bg-input);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .product-images-section.visible {
+      display: block;
+    }
+
+    .product-images-section .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .product-images-section .section-title {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .product-images-section .count-badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      background: var(--bg-card);
+      border-radius: 4px;
+      color: var(--text-secondary);
+    }
+
+    .product-images-section .count-badge.complete {
+      background: var(--accent);
+      color: var(--bg-primary);
+    }
+
+    .cell-type {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      background: var(--bg-input);
+    }
+
+    .cell-type.cluster {
+      background: rgba(20, 184, 166, 0.2);
+      color: var(--accent);
+    }
+
+    /* Main lines textarea */
+    .main-lines-section {
+      display: none;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: var(--bg-input);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .main-lines-section.visible {
+      display: block;
+    }
+
+    .main-lines-section .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .main-lines-section .section-title {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .main-lines-section textarea {
+      width: 100%;
+      min-height: 200px;
+      padding: 0.75rem 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.875rem;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .main-lines-section textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .main-lines-section textarea::placeholder {
+      color: var(--text-secondary);
+    }
   </style>
 </head>
 <body>
@@ -479,6 +581,18 @@
 
     <div class="card">
       <form id="campaign-form">
+        <div class="form-row">
+          <label for="creative-type">Type</label>
+          <div class="input-wrapper">
+            <div class="input-area">
+              <select id="creative-type">
+                <option value="standard">Standard</option>
+                <option value="product_cluster">Product Cluster</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <div class="form-row">
           <label for="topic">Topic</label>
           <div class="input-wrapper">
@@ -560,6 +674,29 @@
           <div class="product-empty" id="product-empty">No products added</div>
         </div>
 
+        <div class="product-images-section" id="product-images-section">
+          <div class="section-header">
+            <span class="section-title">Product Images (8 required)</span>
+            <span class="count-badge" id="product-images-count">0/8</span>
+          </div>
+          <div class="product-input-row">
+            <input type="text" id="product-image-url-input" placeholder="https://m.media-amazon.com/images/...">
+            <button type="button" class="btn-add-product" id="add-product-image-btn">+</button>
+          </div>
+          <ul class="product-list" id="product-image-list"></ul>
+          <div class="product-empty" id="product-image-empty">No product images added</div>
+          <div class="error-message" id="product-images-error"></div>
+        </div>
+
+        <div class="main-lines-section" id="main-lines-section">
+          <div class="section-header">
+            <span class="section-title">Main Lines (12 lines, one per line)</span>
+            <span class="count-badge" id="main-lines-count">0/12</span>
+          </div>
+          <textarea id="main-lines-input" placeholder="Enter 12 main text lines, one per line..."></textarea>
+          <div class="error-message" id="main-lines-error"></div>
+        </div>
+
         <button type="submit" class="btn btn-primary btn-add">+ Add Campaign</button>
       </form>
     </div>
@@ -569,12 +706,13 @@
         <thead>
           <tr>
             <th>#</th>
+            <th>Creative</th>
             <th>Topic</th>
             <th>URL</th>
-            <th>Type</th>
+            <th>Page</th>
             <th>Discount</th>
             <th>Event</th>
-            <th>Products</th>
+            <th>Imgs</th>
             <th></th>
           </tr>
         </thead>
@@ -601,9 +739,11 @@
     // State
     let campaigns = [];
     let currentProductUrls = [];
+    let currentProductImageUrls = [];
 
     // DOM Elements
     const form = document.getElementById('campaign-form');
+    const creativeTypeSelect = document.getElementById('creative-type');
     const topicInput = document.getElementById('topic');
     const urlInput = document.getElementById('url');
     const pageTypeSelect = document.getElementById('page-type');
@@ -617,13 +757,28 @@
     const sendBtn = document.getElementById('send-btn');
     const statusDiv = document.getElementById('status');
 
-    // Product elements
+    // Product elements (for standard creatives)
     const productsToggle = document.getElementById('products-toggle');
     const productSection = document.getElementById('product-section');
     const productUrlInput = document.getElementById('product-url-input');
     const addProductBtn = document.getElementById('add-product-btn');
     const productList = document.getElementById('product-list');
     const productEmpty = document.getElementById('product-empty');
+
+    // Product image elements (for product cluster creatives)
+    const productImagesSection = document.getElementById('product-images-section');
+    const productImageUrlInput = document.getElementById('product-image-url-input');
+    const addProductImageBtn = document.getElementById('add-product-image-btn');
+    const productImageList = document.getElementById('product-image-list');
+    const productImageEmpty = document.getElementById('product-image-empty');
+    const productImagesCount = document.getElementById('product-images-count');
+    const productImagesError = document.getElementById('product-images-error');
+
+    // Main lines elements (for product cluster creatives)
+    const mainLinesSection = document.getElementById('main-lines-section');
+    const mainLinesInput = document.getElementById('main-lines-input');
+    const mainLinesCount = document.getElementById('main-lines-count');
+    const mainLinesError = document.getElementById('main-lines-error');
 
     // Error elements
     const topicError = document.getElementById('topic-error');
@@ -700,6 +855,46 @@
       return true;
     }
 
+    function validateProductImages() {
+      if (creativeTypeSelect.value !== 'product_cluster') {
+        return true;
+      }
+      if (currentProductImageUrls.length !== 8) {
+        productImagesError.textContent = `Exactly 8 product images required (${currentProductImageUrls.length}/8)`;
+        productImagesError.classList.add('visible');
+        return false;
+      }
+      productImagesError.classList.remove('visible');
+      return true;
+    }
+
+    function validateMainLines() {
+      if (creativeTypeSelect.value !== 'product_cluster') {
+        return true;
+      }
+      const lines = getMainLines();
+      if (lines.length !== 12) {
+        mainLinesError.textContent = `Exactly 12 main lines required (${lines.length}/12)`;
+        mainLinesError.classList.add('visible');
+        return false;
+      }
+      mainLinesError.classList.remove('visible');
+      return true;
+    }
+
+    function getMainLines() {
+      return mainLinesInput.value
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+    }
+
+    function updateMainLinesCount() {
+      const lines = getMainLines();
+      mainLinesCount.textContent = `${lines.length}/12`;
+      mainLinesCount.classList.toggle('complete', lines.length === 12);
+    }
+
     function showError(input, errorDiv, message) {
       input.classList.add('invalid');
       errorDiv.textContent = message;
@@ -721,12 +916,16 @@
 
     function validateAll() {
       clearAllErrors();
+      productImagesError.classList.remove('visible');
+      mainLinesError.classList.remove('visible');
       const results = [
         validateTopic(),
         validateUrl(),
         validatePageType(),
         validateDiscount(),
-        validateEvent()
+        validateEvent(),
+        validateProductImages(),
+        validateMainLines()
       ];
       return results.every(r => r === true);
     }
@@ -758,6 +957,37 @@
         renderProductList();
       }
     });
+
+    // Creative type change handler
+    creativeTypeSelect.addEventListener('change', () => {
+      const isProductCluster = creativeTypeSelect.value === 'product_cluster';
+
+      // Show/hide product images section and main lines section
+      productImagesSection.classList.toggle('visible', isProductCluster);
+      mainLinesSection.classList.toggle('visible', isProductCluster);
+
+      // Hide standard products section for product cluster
+      if (isProductCluster) {
+        productsToggle.checked = false;
+        productSection.classList.remove('visible');
+        currentProductUrls = [];
+        renderProductList();
+      }
+
+      // Clear product images and main lines when switching away from product cluster
+      if (!isProductCluster) {
+        currentProductImageUrls = [];
+        renderProductImageList();
+        mainLinesInput.value = '';
+        updateMainLinesCount();
+      }
+
+      // Toggle visibility of products toggle row
+      productsToggle.closest('.toggle-row').style.display = isProductCluster ? 'none' : 'flex';
+    });
+
+    // Main lines input change handler
+    mainLinesInput.addEventListener('input', updateMainLinesCount);
 
     // Add product URL
     addProductBtn.addEventListener('click', addProductUrl);
@@ -831,6 +1061,90 @@
       }
     }
 
+    // Product Image URL handlers (for product cluster)
+    addProductImageBtn.addEventListener('click', addProductImageUrl);
+    productImageUrlInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addProductImageUrl();
+      }
+    });
+
+    function addProductImageUrl() {
+      const url = productImageUrlInput.value.trim();
+      if (!url) return;
+
+      if (!isValidImageUrl(url)) {
+        alert('Please enter a valid image URL');
+        return;
+      }
+
+      if (currentProductImageUrls.length >= 8) {
+        alert('Maximum 8 product images allowed');
+        return;
+      }
+
+      if (currentProductImageUrls.includes(url)) {
+        alert('This URL has already been added');
+        return;
+      }
+
+      currentProductImageUrls.push(url);
+      productImageUrlInput.value = '';
+      renderProductImageList();
+    }
+
+    function isValidImageUrl(url) {
+      try {
+        const parsed = new URL(url);
+        // Accept Amazon image URLs or any HTTPS image URL
+        return parsed.protocol === 'https:';
+      } catch {
+        return false;
+      }
+    }
+
+    function removeProductImageUrl(index) {
+      currentProductImageUrls.splice(index, 1);
+      renderProductImageList();
+    }
+
+    function renderProductImageList() {
+      productImageList.innerHTML = '';
+      productImageEmpty.style.display = currentProductImageUrls.length === 0 ? 'block' : 'none';
+
+      // Update count badge
+      const count = currentProductImageUrls.length;
+      productImagesCount.textContent = `${count}/8`;
+      productImagesCount.classList.toggle('complete', count === 8);
+
+      currentProductImageUrls.forEach((url, index) => {
+        const li = document.createElement('li');
+        const displayUrl = extractImageDisplay(url);
+
+        li.innerHTML = `
+          <span class="product-url-text" title="${escapeHtml(url)}">${escapeHtml(displayUrl)}</span>
+          <button type="button" class="btn-remove-product" onclick="removeProductImageUrl(${index})">&times;</button>
+        `;
+        productImageList.appendChild(li);
+      });
+    }
+
+    function extractImageDisplay(url) {
+      try {
+        const parsed = new URL(url);
+        const path = parsed.pathname;
+        // Get last part of path
+        const lastPart = path.split('/').pop() || '';
+        if (lastPart.length > 30) {
+          return lastPart.substring(0, 27) + '...';
+        }
+        return parsed.hostname.replace('www.', '').substring(0, 20) + '/...' + lastPart.substring(0, 20);
+      } catch {
+        return url.substring(0, 40) + '...';
+      }
+    }
+
     // Add campaign
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -838,6 +1152,7 @@
       if (!validateAll()) return;
 
       const campaign = {
+        creativeType: creativeTypeSelect.value,
         topic: topicInput.value.trim(),
         url: urlInput.value.trim(),
         pageType: pageTypeSelect.value,
@@ -845,13 +1160,16 @@
         discountValue: discountValueInput.value.trim(),
         eventType: eventTypeSelect.value,
         eventName: eventNameInput.value.trim(),
-        productUrls: productsToggle.checked ? [...currentProductUrls] : []
+        productUrls: productsToggle.checked ? [...currentProductUrls] : [],
+        productImageUrls: creativeTypeSelect.value === 'product_cluster' ? [...currentProductImageUrls] : [],
+        mainLines: creativeTypeSelect.value === 'product_cluster' ? getMainLines() : []
       };
 
       campaigns.push(campaign);
       renderTable();
 
       // Reset form
+      creativeTypeSelect.value = 'standard';
       topicInput.value = '';
       urlInput.value = '';
       pageTypeSelect.value = '';
@@ -868,12 +1186,29 @@
       currentProductUrls = [];
       renderProductList();
 
+      // Reset product images section
+      productImagesSection.classList.remove('visible');
+      currentProductImageUrls = [];
+      renderProductImageList();
+
+      // Reset main lines section
+      mainLinesSection.classList.remove('visible');
+      mainLinesInput.value = '';
+      updateMainLinesCount();
+
+      // Show products toggle (in case it was hidden)
+      productsToggle.closest('.toggle-row').style.display = 'flex';
+
       topicInput.focus();
     });
 
     // Edit campaign - populate form and remove from table
     function editCampaign(index) {
       const campaign = campaigns[index];
+
+      // Populate creative type
+      creativeTypeSelect.value = campaign.creativeType || 'standard';
+      const isProductCluster = creativeTypeSelect.value === 'product_cluster';
 
       // Populate form fields
       topicInput.value = campaign.topic;
@@ -901,17 +1236,44 @@
         eventNameInput.value = '';
       }
 
-      // Restore product URLs
-      if (campaign.productUrls && campaign.productUrls.length > 0) {
-        productsToggle.checked = true;
-        productSection.classList.add('visible');
-        currentProductUrls = [...campaign.productUrls];
-        renderProductList();
-      } else {
+      // Handle product sections based on creative type
+      if (isProductCluster) {
+        // Product cluster: show product images section and main lines section, hide products toggle
+        productsToggle.closest('.toggle-row').style.display = 'none';
         productsToggle.checked = false;
         productSection.classList.remove('visible');
         currentProductUrls = [];
         renderProductList();
+
+        productImagesSection.classList.add('visible');
+        currentProductImageUrls = [...(campaign.productImageUrls || [])];
+        renderProductImageList();
+
+        mainLinesSection.classList.add('visible');
+        mainLinesInput.value = (campaign.mainLines || []).join('\n');
+        updateMainLinesCount();
+      } else {
+        // Standard: show products toggle, hide product images section and main lines
+        productsToggle.closest('.toggle-row').style.display = 'flex';
+        productImagesSection.classList.remove('visible');
+        currentProductImageUrls = [];
+        renderProductImageList();
+        mainLinesSection.classList.remove('visible');
+        mainLinesInput.value = '';
+        updateMainLinesCount();
+
+        // Restore product URLs
+        if (campaign.productUrls && campaign.productUrls.length > 0) {
+          productsToggle.checked = true;
+          productSection.classList.add('visible');
+          currentProductUrls = [...campaign.productUrls];
+          renderProductList();
+        } else {
+          productsToggle.checked = false;
+          productSection.classList.remove('visible');
+          currentProductUrls = [];
+          renderProductList();
+        }
       }
 
       // Remove from array and re-render
@@ -939,16 +1301,25 @@
         const discount = formatDiscount(c);
         const event = c.eventType === 'custom' ? c.eventName : '-';
         const urlPath = c.url ? new URL(c.url).pathname : '-';
-        const productCount = c.productUrls ? c.productUrls.length : 0;
+
+        // Show appropriate image count based on creative type
+        const isProductCluster = c.creativeType === 'product_cluster';
+        const imgCount = isProductCluster
+          ? (c.productImageUrls ? c.productImageUrls.length : 0)
+          : (c.productUrls ? c.productUrls.length : 0);
+
+        const creativeTypeLabel = isProductCluster ? 'Cluster' : 'Standard';
+        const creativeTypeClass = isProductCluster ? 'cluster' : '';
 
         tr.innerHTML = `
           <td>${i + 1}</td>
+          <td><span class="cell-type ${creativeTypeClass}">${creativeTypeLabel}</span></td>
           <td class="cell-topic" title="${escapeHtml(c.topic)}">${escapeHtml(c.topic)}</td>
           <td class="cell-topic" title="${escapeHtml(c.url)}">${escapeHtml(urlPath)}</td>
           <td>${c.pageType}</td>
           <td>${discount}</td>
           <td>${escapeHtml(event)}</td>
-          <td>${productCount > 0 ? productCount : '-'}</td>
+          <td>${imgCount > 0 ? imgCount : '-'}</td>
           <td class="cell-actions">
             <button class="btn-action btn-edit" onclick="editCampaign(${i})"><span>&#9999;</span></button>
             <button class="btn-action btn-delete" onclick="deleteCampaign(${i})">&times;</button>
@@ -983,7 +1354,8 @@
       const payload = {
         topic: campaign.topic,
         url: campaign.url,
-        page_type: campaign.pageType
+        page_type: campaign.pageType,
+        creative_type: campaign.creativeType || 'standard'
       };
 
       // Discount
@@ -1002,9 +1374,19 @@
       }
       // If none, omit event field
 
-      // Product URLs
+      // Product URLs (for standard creatives)
       if (campaign.productUrls && campaign.productUrls.length > 0) {
         payload.product_urls = campaign.productUrls;
+      }
+
+      // Product Image URLs (for product cluster creatives)
+      if (campaign.productImageUrls && campaign.productImageUrls.length > 0) {
+        payload.product_image_urls = campaign.productImageUrls;
+      }
+
+      // Main Lines (for product cluster creatives)
+      if (campaign.mainLines && campaign.mainLines.length > 0) {
+        payload.main_lines = campaign.mainLines;
       }
 
       return payload;

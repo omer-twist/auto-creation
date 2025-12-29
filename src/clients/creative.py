@@ -4,7 +4,7 @@ import time
 
 import requests
 
-from ..models.styles import Style
+from ..models.styles import Style, ProductClusterStyle
 
 
 class CreativeClient:
@@ -94,3 +94,83 @@ class CreativeClient:
             return status, image_url, error_msg
         except requests.RequestException as e:
             return "error", None, str(e)
+
+    def upload_media(self, image_data: bytes, filename: str = "image.png") -> str:
+        """
+        Upload image to Placid media endpoint.
+
+        Args:
+            image_data: Image bytes to upload
+            filename: Filename for the upload
+
+        Returns:
+            Placid-hosted URL for the uploaded image
+        """
+        url = f"{self.base_url}/media"
+        headers = {"Authorization": f"Bearer {self.api_token}"}
+
+        files = {"file": (filename, image_data, "image/png")}
+
+        try:
+            response = requests.post(url, files=files, headers=headers, timeout=60)
+            response.raise_for_status()
+            data = response.json()
+            # Response format: {"media": [{"file_key": "file", "file_id": "https://..."}]}
+            media = data.get("media", [])
+            if media and len(media) > 0:
+                return media[0].get("file_id")
+            raise RuntimeError(f"Unexpected Placid response: {data}")
+        except requests.RequestException as e:
+            raise RuntimeError(f"Failed to upload media to Placid: {e}")
+
+    def submit_product_cluster_job(
+        self,
+        header_text: str,
+        main_text: str,
+        style: ProductClusterStyle,
+        product_image_url: str,
+        template_uuid: str,
+    ) -> int | None:
+        """
+        Submit a product cluster image job.
+
+        Args:
+            header_text: Header text for the creative
+            main_text: Main text for the creative
+            style: ProductClusterStyle with colors
+            product_image_url: URL to the product cluster image
+            template_uuid: Product cluster template UUID
+
+        Returns:
+            Image ID or None on error
+        """
+        url = f"{self.base_url}/{template_uuid}"
+        headers = self._get_headers()
+
+        payload = {
+            "create_now": False,
+            "layers": {
+                "bg": {
+                    "background_color": style.background_color,
+                },
+                "header": {
+                    "text": header_text,
+                    "text_color": style.header_color,
+                },
+                "main_text": {
+                    "text": main_text,
+                    "text_color": style.main_color,
+                },
+                "image": {
+                    "image": product_image_url,
+                },
+            },
+        }
+
+        try:
+            response = self._request_with_retry("POST", url, headers, json=payload)
+            response.raise_for_status()
+            data = response.json()
+            return data.get("id")
+        except requests.RequestException:
+            return None

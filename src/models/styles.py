@@ -5,11 +5,20 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Style:
-    """Visual style for a creative."""
+    """Visual style for a standard creative."""
 
     background_color: str
     text_color: str
     font: str
+
+
+@dataclass(frozen=True)
+class ProductClusterStyle:
+    """Visual style for a product cluster creative."""
+
+    background_color: str
+    header_color: str
+    main_color: str
 
 
 # 12 style combinations (4 batches x 3 colors)
@@ -46,3 +55,39 @@ def get_style(index: int) -> Style:
 def get_styles_for_count(count: int) -> list[Style]:
     """Get N styles, cycling through pool if needed."""
     return [get_style(i) for i in range(count)]
+
+
+# Product Cluster styles (12 total)
+# Black text = header #362626, main #523F3F
+# White text = header #FFFFFF, main #FFFFFF
+PRODUCT_CLUSTER_STYLES: list[ProductClusterStyle] = [
+    # Black text styles (6)
+    ProductClusterStyle("#FDEDD4", "#362626", "#523F3F"),
+    ProductClusterStyle("#D4D2D6", "#362626", "#523F3F"),
+    ProductClusterStyle("#E8AAAC", "#362626", "#523F3F"),
+    ProductClusterStyle("#B5D7E6", "#362626", "#523F3F"),
+    ProductClusterStyle("#DBD4FD", "#362626", "#523F3F"),
+    ProductClusterStyle("#FDD4D4", "#362626", "#523F3F"),
+    # White text styles (6)
+    ProductClusterStyle("#855E89", "#FFFFFF", "#FFFFFF"),
+    ProductClusterStyle("#559B82", "#FFFFFF", "#FFFFFF"),
+    ProductClusterStyle("#A69A87", "#FFFFFF", "#FFFFFF"),
+    ProductClusterStyle("#597A9A", "#FFFFFF", "#FFFFFF"),
+    ProductClusterStyle("#827171", "#FFFFFF", "#FFFFFF"),
+    ProductClusterStyle("#5B6E82", "#FFFFFF", "#FFFFFF"),
+]
+
+
+def get_product_cluster_styles() -> list[ProductClusterStyle]:
+    """Get all 12 product cluster style combinations."""
+    return PRODUCT_CLUSTER_STYLES
+
+
+def get_product_cluster_style(index: int) -> ProductClusterStyle:
+    """Get product cluster style by index (cycles if index >= len)."""
+    return PRODUCT_CLUSTER_STYLES[index % len(PRODUCT_CLUSTER_STYLES)]
+
+
+def get_product_cluster_styles_for_count(count: int) -> list[ProductClusterStyle]:
+    """Get N product cluster styles, cycling through pool if needed."""
+    return [get_product_cluster_style(i) for i in range(count)]

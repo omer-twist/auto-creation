@@ -4,7 +4,7 @@ import time
 
 from ..clients.creative import CreativeClient
 from ..models import Creative
-from ..models.styles import Style
+from ..models.styles import Style, ProductClusterStyle
 
 
 class ImageGenerationError(Exception):
@@ -94,3 +94,100 @@ class CreativeService:
                     raise ImageGenerationError(f"Placid error for job {job_id}: {error}")
 
         return [urls[job_id] for job_id in job_ids]
+
+    # ===== Product Cluster Methods =====
+
+    def generate_product_cluster_batch(
+        self,
+        text_pairs: list[tuple[str, str]],
+        styles: list[ProductClusterStyle],
+        product_image_url: str,
+        template_uuid: str,
+        template_uuid_white: str,
+    ) -> list[Creative]:
+        """
+        Generate multiple product cluster creatives.
+
+        Args:
+            text_pairs: List of (header, main_text) tuples.
+            styles: List of ProductClusterStyle objects.
+            product_image_url: Shared product cluster image URL.
+            template_uuid: Product cluster template UUID (black text).
+            template_uuid_white: Product cluster template UUID (white text).
+
+        Returns:
+            List of Creative objects.
+        """
+        if len(text_pairs) != len(styles):
+            raise ValueError(f"text_pairs ({len(text_pairs)}) and styles ({len(styles)}) must match")
+
+        urls = self._generate_product_cluster_images(
+            text_pairs, styles, product_image_url, template_uuid, template_uuid_white
+        )
+        return [
+            self._build_product_cluster_creative(header, main_text, style, url, product_image_url)
+            for (header, main_text), style, url in zip(text_pairs, styles, urls)
+        ]
+
+    def _build_product_cluster_creative(
+        self,
+        header: str,
+        main_text: str,
+        style: ProductClusterStyle,
+        image_url: str,
+        product_image_url: str,
+    ) -> Creative:
+        """Build a Creative from product cluster components."""
+        return Creative(
+            text=header,
+            image_url=image_url,
+            background_color=style.background_color,
+            text_color=style.header_color,
+            font="",  # Font handled by template
+            text_secondary=main_text,
+            text_color_secondary=style.main_color,
+            product_image_url=product_image_url,
+        )
+
+    def _generate_product_cluster_images(
+        self,
+        text_pairs: list[tuple[str, str]],
+        styles: list[ProductClusterStyle],
+        product_image_url: str,
+        template_uuid: str,
+        template_uuid_white: str,
+    ) -> list[str]:
+        """Submit all product cluster jobs, poll until done, return URLs."""
+        print("Submitting all product cluster images...", flush=True)
+        job_ids = self._submit_all_product_cluster(
+            text_pairs, styles, product_image_url, template_uuid, template_uuid_white
+        )
+
+        print("Polling for completion...", flush=True)
+        return self._poll_until_done(job_ids)
+
+    def _submit_all_product_cluster(
+        self,
+        text_pairs: list[tuple[str, str]],
+        styles: list[ProductClusterStyle],
+        product_image_url: str,
+        template_uuid: str,
+        template_uuid_white: str,
+    ) -> list[int]:
+        """Submit all product cluster Placid jobs, return job IDs."""
+        job_ids = []
+        for i, ((header, main_text), style) in enumerate(zip(text_pairs, styles)):
+            # Route to white text template if header color is white
+            use_template = template_uuid_white if style.header_color == "#FFFFFF" else template_uuid
+            image_id = self.client.submit_product_cluster_job(
+                header_text=header,
+                main_text=main_text,
+                style=style,
+                product_image_url=product_image_url,
+                template_uuid=use_template,
+            )
+            if not image_id:
+                raise ImageGenerationError(f"Failed to submit product cluster image {i + 1}")
+            job_ids.append(image_id)
+            print(f"  Submitted product cluster image {i + 1}", flush=True)
+        return job_ids
