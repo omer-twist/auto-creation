@@ -23,7 +23,7 @@ class RemoveBgClient:
         response = requests.post(
             self.base_url,
             files={"image_file": ("image.png", image_data, "image/png")},
-            data={"size": "auto", "format": "png"},
+            data={"size": "auto", "format": "png", "shadow_type": "drop"},
             headers={"X-Api-Key": self.api_key},
             timeout=60,
         )

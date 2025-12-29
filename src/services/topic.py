@@ -95,9 +95,9 @@ class TopicService:
 
         # 2. Generate text pairs (header + main_text)
         if topic.main_lines and len(topic.main_lines) == 12:
-            # Use user-provided main lines (header = topic name)
+            # Use user-provided main lines (header = topic name in caps)
             print("=== USING PROVIDED MAIN LINES ===", flush=True)
-            text_pairs = [(topic.name, line) for line in topic.main_lines]
+            text_pairs = [(topic.name.upper(), line) for line in topic.main_lines]
         else:
             # Generate via LLM
             print("=== GENERATING TEXT PAIRS ===", flush=True)

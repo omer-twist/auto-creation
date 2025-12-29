@@ -14,15 +14,15 @@ MONDAY_BOARD_ID = os.getenv("MONDAY_BOARD_ID")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 REMOVEBG_API_KEY = os.getenv("REMOVEBG_API_KEY")
 
-# Monday.com column IDs (board structure)
-MONDAY_COL_DATE = "date_mkyh6m6f"
-MONDAY_COL_STATUS = "color_mkyhm0pa"
-MONDAY_COL_SITE = "dropdown_mkyhy55m"
-MONDAY_COL_CREATIVES = "file_mky7b1ww"
-MONDAY_COL_URL = "text_mky7650h"
-MONDAY_COL_CONTENT_MANAGER = "color_mkyhe4e6"
+# Monday.com column IDs (board structure) - Auto Creation (eComm) board
+MONDAY_COL_DATE = "date4"
+MONDAY_COL_STATUS = "status"
+MONDAY_COL_SITE = "dropdown7"
+MONDAY_COL_CREATIVES = "files1"
+MONDAY_COL_URL = "url"
+MONDAY_COL_CONTENT_MANAGER = "status_19"
 MONDAY_GROUP_ID = "topics"
 
 # Monday.com constant values
 MONDAY_SITE_VALUE = {"ids": [1]}  # "bst"
-MONDAY_CONTENT_MANAGER_VALUE = {"index": 1}  # "om"
+MONDAY_CONTENT_MANAGER_VALUE = {"index": 7}  # "om"
