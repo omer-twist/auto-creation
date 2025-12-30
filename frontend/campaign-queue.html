@@ -676,8 +676,8 @@
 
         <div class="product-images-section" id="product-images-section">
           <div class="section-header">
-            <span class="section-title">Product Images (8 required)</span>
-            <span class="count-badge" id="product-images-count">0/8</span>
+            <span class="section-title">Product Images (1-8)</span>
+            <span class="count-badge" id="product-images-count">0</span>
           </div>
           <div class="product-input-row">
             <input type="text" id="product-image-url-input" placeholder="https://m.media-amazon.com/images/...">
@@ -859,8 +859,8 @@
       if (creativeTypeSelect.value !== 'product_cluster') {
         return true;
       }
-      if (currentProductImageUrls.length !== 8) {
-        productImagesError.textContent = `Exactly 8 product images required (${currentProductImageUrls.length}/8)`;
+      if (currentProductImageUrls.length < 1 || currentProductImageUrls.length > 8) {
+        productImagesError.textContent = `1-8 product images required (${currentProductImageUrls.length} added)`;
         productImagesError.classList.add('visible');
         return false;
       }
@@ -1115,8 +1115,8 @@
 
       // Update count badge
       const count = currentProductImageUrls.length;
-      productImagesCount.textContent = `${count}/8`;
-      productImagesCount.classList.toggle('complete', count === 8);
+      productImagesCount.textContent = `${count}`;
+      productImagesCount.classList.toggle('complete', count >= 1 && count <= 8);
 
       currentProductImageUrls.forEach((url, index) => {
         const li = document.createElement('li');

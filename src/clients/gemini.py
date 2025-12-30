@@ -63,6 +63,7 @@ class GeminiClient:
                 response_modalities=["IMAGE", "TEXT"],
                 image_config=types.ImageConfig(
                     aspect_ratio=aspect_ratio,
+                    image_size="2K",
                 ),
             ),
         )

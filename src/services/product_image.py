@@ -3,6 +3,8 @@
 import requests
 from io import BytesIO
 
+from PIL import Image
+
 from ..clients.gemini import GeminiClient
 from ..clients.removebg import RemoveBgClient
 from ..clients.creative import CreativeClient
@@ -32,13 +34,13 @@ class ProductImageService:
         5. Return Placid-hosted URL
 
         Args:
-            image_urls: List of product image URLs (exactly 8)
+            image_urls: List of product image URLs (1-8)
 
         Returns:
             Placid-hosted URL for the cluster image
         """
-        if len(image_urls) != 8:
-            raise ValueError(f"Expected exactly 8 image URLs, got {len(image_urls)}")
+        if not 1 <= len(image_urls) <= 8:
+            raise ValueError(f"Expected 1-8 image URLs, got {len(image_urls)}")
 
         print(f"Downloading {len(image_urls)} product images...", flush=True)
 
@@ -59,9 +61,14 @@ class ProductImageService:
         clean_bytes = self.removebg.remove_background(cluster_bytes)
         print(f"  Cleaned image ({len(clean_bytes)} bytes)", flush=True)
 
-        # 4. Upload to Placid
+        # 4. Crop transparent areas
+        print("Cropping transparent areas...", flush=True)
+        cropped_bytes = self._crop_transparent(clean_bytes)
+        print(f"  Cropped image ({len(cropped_bytes)} bytes)", flush=True)
+
+        # 5. Upload to Placid
         print("Uploading to Placid...", flush=True)
-        placid_url = self.creative.upload_media(clean_bytes, "product_cluster.png")
+        placid_url = self.creative.upload_media(cropped_bytes, "product_cluster.png")
         print(f"  Uploaded: {placid_url}", flush=True)
 
         return placid_url
@@ -80,3 +87,20 @@ class ProductImageService:
             except requests.RequestException as e:
                 raise RuntimeError(f"Failed to download image {i + 1} from {url}: {e}")
         return images
+
+    def _crop_transparent(self, image_data: bytes) -> bytes:
+        """Crop transparent areas from image, keeping only the content bounding box."""
+        img = Image.open(BytesIO(image_data))
+
+        if img.mode != "RGBA":
+            img = img.convert("RGBA")
+
+        bbox = img.getbbox()
+        if not bbox:
+            return image_data
+
+        img = img.crop(bbox)
+
+        output = BytesIO()
+        img.save(output, format="PNG")
+        return output.getvalue()

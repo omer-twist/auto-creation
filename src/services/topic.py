@@ -74,7 +74,7 @@ class TopicService:
         """
         Generate product cluster topic with all campaigns and creatives.
 
-        Creates a single cluster image from 8 product URLs, then:
+        Creates a single cluster image from 1-8 product URLs, then:
         - Generates 12 text pairs (header + main)
         - Creates 12 creatives using the shared cluster image
         - Groups into 4 campaigns of 3 creatives each
@@ -84,8 +84,8 @@ class TopicService:
         if not self.product_image_service:
             raise RuntimeError("ProductImageService required for product cluster generation")
 
-        if not topic.product_image_urls or len(topic.product_image_urls) != 8:
-            raise ValueError(f"Expected exactly 8 product image URLs, got {len(topic.product_image_urls or [])}")
+        if not topic.product_image_urls or not 1 <= len(topic.product_image_urls) <= 8:
+            raise ValueError(f"Expected 1-8 product image URLs, got {len(topic.product_image_urls or [])}")
 
         total = self.CAMPAIGNS_PER_TOPIC * self.CREATIVES_PER_CAMPAIGN
 
