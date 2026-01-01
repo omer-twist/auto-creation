@@ -20,6 +20,7 @@ class GeminiClient:
         self,
         product_images: list[bytes],
         aspect_ratio: str = "16:9",
+        is_people_mode: bool = False,
     ) -> bytes:
         """
         Generate a product cluster image from multiple product images.
@@ -27,6 +28,7 @@ class GeminiClient:
         Args:
             product_images: List of product image bytes (max 8)
             aspect_ratio: Output aspect ratio (default 16:9)
+            is_people_mode: If True, preserve original images (don't extract products from people)
 
         Returns:
             Generated image bytes
@@ -34,15 +36,38 @@ class GeminiClient:
         if len(product_images) > 8:
             raise ValueError("Max 8 input images supported")
 
-        # Build the prompt
-        prompt = (
-            "Create a new image that arranges all these products in a dynamic, dense, 3D cluster composition. "
-            "Products should overlap naturally with taller items in back, smaller items in front. "
-            "Make the products stand straight and look natural together as a cohesive group. "
-            "Do NOT place them in a straight horizontal line. "
-            "Use a clean white background. "
-            "Output a single combined image."
-        )
+        # Build the prompt based on mode and number of products
+        if is_people_mode:
+            # People mode: preserve original images, always side-by-side
+            prompt = (
+                "Create a new image that places these photos side by side in a horizontal row. "
+                "IMPORTANT: Preserve each image exactly as provided - do not modify, crop, or extract elements from them. "
+                "Keep consistent spacing between images - approximately half an image width gap between each. "
+                "Center the arrangement in the frame. "
+                "Use a clean white background. "
+                "Output a single combined image."
+            )
+        elif len(product_images) <= 3:
+            # Simple side-by-side layout for 1-3 products
+            prompt = (
+                "Create a new image that places these products side by side in a horizontal row. "
+                "Keep consistent spacing between products - approximately half a product width gap between each. "
+                "Center the products in the frame. "
+                "Make the products stand straight and upright. "
+                "Use a clean white background. "
+                "Output a single combined image."
+            )
+        else:
+            # Spread out cluster for 4+ products
+            prompt = (
+                "Create a new image that arranges all these products in a dynamic, spread-out 3D cluster composition. "
+                "Products should be spread wider apart while still forming a cohesive group. "
+                "Allow natural overlap with taller items in back, smaller items in front, but keep spacing loose. "
+                "Make the products stand straight and look natural together. "
+                "Do NOT place them in a tight dense cluster - spread them out horizontally. "
+                "Use a clean white background. "
+                "Output a single combined image."
+            )
 
         # Convert bytes to PIL images
         pil_images = []
@@ -63,7 +88,7 @@ class GeminiClient:
                 response_modalities=["IMAGE", "TEXT"],
                 image_config=types.ImageConfig(
                     aspect_ratio=aspect_ratio,
-                    image_size="2K",
+                    image_size="4K",
                 ),
             ),
         )

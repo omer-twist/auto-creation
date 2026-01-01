@@ -69,6 +69,7 @@ def handler(event, context):
             creative_type=creative_type,
             product_image_urls=body.get("product_image_urls", []),
             main_lines=body.get("main_lines", []),
+            is_people_mode=body.get("is_people_mode", False),
         )
         print(f"Processing topic: {topic.name} (creative_type={creative_type})", flush=True)
 

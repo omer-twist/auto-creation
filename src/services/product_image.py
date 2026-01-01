@@ -23,7 +23,7 @@ class ProductImageService:
         self.removebg = removebg_client
         self.creative = creative_client
 
-    def generate_cluster(self, image_urls: list[str]) -> str:
+    def generate_cluster(self, image_urls: list[str], is_people_mode: bool = False) -> str:
         """
         Generate a product cluster image from product image URLs.
 
@@ -35,6 +35,7 @@ class ProductImageService:
 
         Args:
             image_urls: List of product image URLs (1-8)
+            is_people_mode: If True, preserve original images (don't extract products from people)
 
         Returns:
             Placid-hosted URL for the cluster image
@@ -53,6 +54,7 @@ class ProductImageService:
         cluster_bytes = self.gemini.generate_product_cluster(
             product_images=product_images,
             aspect_ratio="16:9",
+            is_people_mode=is_people_mode,
         )
         print(f"  Generated cluster image ({len(cluster_bytes)} bytes)", flush=True)
 

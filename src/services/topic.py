@@ -91,7 +91,10 @@ class TopicService:
 
         # 1. Generate product cluster image (shared across all creatives)
         print("=== GENERATING PRODUCT CLUSTER IMAGE ===", flush=True)
-        cluster_url = self.product_image_service.generate_cluster(topic.product_image_urls)
+        cluster_url = self.product_image_service.generate_cluster(
+            topic.product_image_urls,
+            is_people_mode=topic.is_people_mode,
+        )
 
         # 2. Generate text pairs (header + main_text)
         if topic.main_lines and len(topic.main_lines) == 12:

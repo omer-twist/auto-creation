@@ -18,4 +18,5 @@ class Topic:
     creative_type: str = "standard"  # "standard" or "product_cluster"
     product_image_urls: list[str] = field(default_factory=list)  # 1-8 image URLs for product cluster
     main_lines: list[str] = field(default_factory=list)  # 12 main text lines (skips LLM generation)
+    is_people_mode: bool = False  # Preserve original images (don't extract products from people)
     campaigns: list[Campaign] = field(default_factory=list)
