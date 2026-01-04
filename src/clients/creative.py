@@ -130,6 +130,7 @@ class CreativeClient:
         style: ProductClusterStyle,
         product_image_url: str,
         template_uuid: str,
+        include_header: bool = True,
     ) -> int | None:
         """
         Submit a product cluster image job.
@@ -140,6 +141,7 @@ class CreativeClient:
             style: ProductClusterStyle with colors
             product_image_url: URL to the product cluster image
             template_uuid: Product cluster template UUID
+            include_header: Whether to include the header layer
 
         Returns:
             Image ID or None on error
@@ -147,24 +149,28 @@ class CreativeClient:
         url = f"{self.base_url}/{template_uuid}"
         headers = self._get_headers()
 
+        layers = {
+            "bg": {
+                "background_color": style.background_color,
+            },
+            "main_text": {
+                "text": main_text,
+                "text_color": style.main_color,
+            },
+            "image": {
+                "image": product_image_url,
+            },
+        }
+
+        if include_header:
+            layers["header"] = {
+                "text": header_text,
+                "text_color": style.header_color,
+            }
+
         payload = {
             "create_now": False,
-            "layers": {
-                "bg": {
-                    "background_color": style.background_color,
-                },
-                "header": {
-                    "text": header_text,
-                    "text_color": style.header_color,
-                },
-                "main_text": {
-                    "text": main_text,
-                    "text_color": style.main_color,
-                },
-                "image": {
-                    "image": product_image_url,
-                },
-            },
+            "layers": layers,
         }
 
         try:

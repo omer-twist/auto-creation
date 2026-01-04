@@ -19,4 +19,5 @@ class Topic:
     product_image_urls: list[str] = field(default_factory=list)  # 1-8 image URLs for product cluster
     main_lines: list[str] = field(default_factory=list)  # 12 main text lines (skips LLM generation)
     is_people_mode: bool = False  # Preserve original images (don't extract products from people)
+    include_header: bool = True  # Include topic name in header (product cluster only)
     campaigns: list[Campaign] = field(default_factory=list)

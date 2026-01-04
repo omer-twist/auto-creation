@@ -682,6 +682,14 @@
           </label>
         </div>
 
+        <div class="toggle-row" id="header-toggle-row" style="display: none;">
+          <span class="toggle-label">Header</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="header-toggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
         <div class="product-images-section" id="product-images-section">
           <div class="section-header">
             <span class="section-title">Product Images (1-8)</span>
@@ -776,6 +784,10 @@
     // People mode toggle (for product cluster creatives)
     const peopleModeRow = document.getElementById('people-mode-row');
     const peopleModeToggle = document.getElementById('people-mode-toggle');
+
+    // Header toggle (for product cluster creatives)
+    const headerToggleRow = document.getElementById('header-toggle-row');
+    const headerToggle = document.getElementById('header-toggle');
 
     // Product image elements (for product cluster creatives)
     const productImagesSection = document.getElementById('product-images-section');
@@ -974,10 +986,11 @@
     creativeTypeSelect.addEventListener('change', () => {
       const isProductCluster = creativeTypeSelect.value === 'product_cluster';
 
-      // Show/hide product images section, main lines section, and people mode toggle
+      // Show/hide product images section, main lines section, people mode toggle, and header toggle
       productImagesSection.classList.toggle('visible', isProductCluster);
       mainLinesSection.classList.toggle('visible', isProductCluster);
       peopleModeRow.style.display = isProductCluster ? 'flex' : 'none';
+      headerToggleRow.style.display = isProductCluster ? 'flex' : 'none';
 
       // Hide standard products section for product cluster
       if (isProductCluster) {
@@ -987,13 +1000,14 @@
         renderProductList();
       }
 
-      // Clear product images, main lines, and people mode when switching away from product cluster
+      // Clear product images, main lines, people mode, and header when switching away from product cluster
       if (!isProductCluster) {
         currentProductImageUrls = [];
         renderProductImageList();
         mainLinesInput.value = '';
         updateMainLinesCount();
         peopleModeToggle.checked = false;
+        headerToggle.checked = true;  // Reset to default (on)
       }
 
       // Toggle visibility of products toggle row
@@ -1177,7 +1191,8 @@
         productUrls: productsToggle.checked ? [...currentProductUrls] : [],
         productImageUrls: creativeTypeSelect.value === 'product_cluster' ? [...currentProductImageUrls] : [],
         mainLines: creativeTypeSelect.value === 'product_cluster' ? getMainLines() : [],
-        isPeopleMode: creativeTypeSelect.value === 'product_cluster' ? peopleModeToggle.checked : false
+        isPeopleMode: creativeTypeSelect.value === 'product_cluster' ? peopleModeToggle.checked : false,
+        includeHeader: creativeTypeSelect.value === 'product_cluster' ? headerToggle.checked : true
       };
 
       campaigns.push(campaign);
@@ -1214,6 +1229,10 @@
       // Reset people mode toggle
       peopleModeRow.style.display = 'none';
       peopleModeToggle.checked = false;
+
+      // Reset header toggle
+      headerToggleRow.style.display = 'none';
+      headerToggle.checked = true;
 
       // Show products toggle (in case it was hidden)
       productsToggle.closest('.toggle-row').style.display = 'flex';
@@ -1257,7 +1276,7 @@
 
       // Handle product sections based on creative type
       if (isProductCluster) {
-        // Product cluster: show product images section, main lines section, and people toggle, hide products toggle
+        // Product cluster: show product images section, main lines section, people toggle, and header toggle, hide products toggle
         productsToggle.closest('.toggle-row').style.display = 'none';
         productsToggle.checked = false;
         productSection.classList.remove('visible');
@@ -1267,6 +1286,9 @@
         peopleModeRow.style.display = 'flex';
         peopleModeToggle.checked = campaign.isPeopleMode || false;
 
+        headerToggleRow.style.display = 'flex';
+        headerToggle.checked = campaign.includeHeader !== false;  // Default to true if not set
+
         productImagesSection.classList.add('visible');
         currentProductImageUrls = [...(campaign.productImageUrls || [])];
         renderProductImageList();
@@ -1275,10 +1297,12 @@
         mainLinesInput.value = (campaign.mainLines || []).join('\n');
         updateMainLinesCount();
       } else {
-        // Standard: show products toggle, hide product images section, main lines, and people toggle
+        // Standard: show products toggle, hide product images section, main lines, people toggle, and header toggle
         productsToggle.closest('.toggle-row').style.display = 'flex';
         peopleModeRow.style.display = 'none';
         peopleModeToggle.checked = false;
+        headerToggleRow.style.display = 'none';
+        headerToggle.checked = true;
         productImagesSection.classList.remove('visible');
         currentProductImageUrls = [];
         renderProductImageList();
@@ -1416,6 +1440,11 @@
       // People mode (for product cluster creatives)
       if (campaign.isPeopleMode) {
         payload.is_people_mode = true;
+      }
+
+      // Include header (for product cluster creatives) - only send if false (default is true)
+      if (campaign.includeHeader === false) {
+        payload.include_header = false;
       }
 
       return payload;

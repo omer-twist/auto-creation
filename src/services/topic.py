@@ -124,6 +124,7 @@ class TopicService:
             product_image_url=cluster_url,
             template_uuid=template_uuid,
             template_uuid_white=template_uuid_white,
+            include_header=topic.include_header,
         )
 
         # 5. Group into campaigns

@@ -104,6 +104,7 @@ class CreativeService:
         product_image_url: str,
         template_uuid: str,
         template_uuid_white: str,
+        include_header: bool = True,
     ) -> list[Creative]:
         """
         Generate multiple product cluster creatives.
@@ -114,6 +115,7 @@ class CreativeService:
             product_image_url: Shared product cluster image URL.
             template_uuid: Product cluster template UUID (black text).
             template_uuid_white: Product cluster template UUID (white text).
+            include_header: Whether to include the header layer in Placid.
 
         Returns:
             List of Creative objects.
@@ -122,7 +124,7 @@ class CreativeService:
             raise ValueError(f"text_pairs ({len(text_pairs)}) and styles ({len(styles)}) must match")
 
         urls = self._generate_product_cluster_images(
-            text_pairs, styles, product_image_url, template_uuid, template_uuid_white
+            text_pairs, styles, product_image_url, template_uuid, template_uuid_white, include_header
         )
         return [
             self._build_product_cluster_creative(header, main_text, style, url, product_image_url)
@@ -156,11 +158,12 @@ class CreativeService:
         product_image_url: str,
         template_uuid: str,
         template_uuid_white: str,
+        include_header: bool = True,
     ) -> list[str]:
         """Submit all product cluster jobs, poll until done, return URLs."""
         print("Submitting all product cluster images...", flush=True)
         job_ids = self._submit_all_product_cluster(
-            text_pairs, styles, product_image_url, template_uuid, template_uuid_white
+            text_pairs, styles, product_image_url, template_uuid, template_uuid_white, include_header
         )
 
         print("Polling for completion...", flush=True)
@@ -173,6 +176,7 @@ class CreativeService:
         product_image_url: str,
         template_uuid: str,
         template_uuid_white: str,
+        include_header: bool = True,
     ) -> list[int]:
         """Submit all product cluster Placid jobs, return job IDs."""
         job_ids = []
@@ -185,6 +189,7 @@ class CreativeService:
                 style=style,
                 product_image_url=product_image_url,
                 template_uuid=use_template,
+                include_header=include_header,
             )
             if not image_id:
                 raise ImageGenerationError(f"Failed to submit product cluster image {i + 1}")

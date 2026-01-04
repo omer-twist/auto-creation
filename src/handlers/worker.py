@@ -70,6 +70,7 @@ def handler(event, context):
             product_image_urls=body.get("product_image_urls", []),
             main_lines=body.get("main_lines", []),
             is_people_mode=body.get("is_people_mode", False),
+            include_header=body.get("include_header", True),
         )
         print(f"Processing topic: {topic.name} (creative_type={creative_type})", flush=True)
 
