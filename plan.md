@@ -547,18 +547,54 @@ print("Phase 1 complete - all imports and basic tests pass")
 
 ---
 
+---
+
+## V2 Separation Principle
+
+**v2 is completely self-contained.** Regular `src/` continues working unchanged - team can keep shipping features.
+
+**What v2 has:**
+- `src/v2/models/` - fresh models (no imports from old `src/models/`)
+- `src/v2/generators/` - generator classes
+- `src/v2/prompts/` - v2's own prompts (doesn't touch `src/prompts/`)
+- `src/v2/config/` - creative type configs
+
+**Shared utilities (imported from regular src):**
+- `src/clients/llm.py` - LLMClient (pure utility, no business logic)
+
+When v2 is complete and tested, we switch over and delete old code.
+
+---
+
 ## Migration Phases Summary
 
 | Phase | Goal | Key Files |
 |-------|------|-----------|
-| 1. Foundation | Models and registries | `src/v2/models/`, `src/v2/generators/base.py` |
-| 2. Text Generator | Extract text generation | `src/v2/generators/text/product_cluster.py` |
+| 1. Foundation ✅ | Models and registries | `src/v2/models/`, `src/v2/generators/base.py` |
+| 2. Text Generator ✅ | Main text generation | `src/v2/generators/text/main_text.py`, `src/v2/prompts/main_text.txt` |
 | 3. Image Generator | Extract image generation | `src/v2/generators/image/cluster.py` |
 | 4. Config | Create product_cluster config | `src/v2/config/types/product_cluster.py` |
 | 5. Engine | Wire everything together | `src/v2/engine/engine.py` |
 | 6. Integration | New API endpoints | `src/handlers/worker.py` (v2 routes) |
 | 7. Frontend | Config-driven UI | `frontend/` |
 | 8. Cleanup | Remove old code | Delete `src/services/`, old models |
+
+---
+
+## Phase 2: Main Text Generator ✅
+
+### Files Created
+
+1. **`src/v2/prompts/main_text.txt`** - single prompt (replaces 3-stage pipeline)
+2. **`src/v2/generators/text/__init__.py`** - exports MainTextGenerator
+3. **`src/v2/generators/text/main_text.py`** - MainTextGenerator class
+
+### Key Decisions
+
+- **Header** = always `topic.name.upper()` (not LLM-generated)
+- **Main Text** = LLM-generated via single prompt
+- **Override** = if `main_lines` provided, skip LLM
+- **Prompt** = simplified, just topic name (EVENT/DISCOUNT rules removed for now)
 
 ---
 
