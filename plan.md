@@ -598,7 +598,7 @@ When v2 is complete and tested, we switch over and delete old code.
 | 3. Image Generator ✅ | Extract image generation | `src/v2/generators/image/cluster.py` |
 | 4. Config ✅ | Create product_cluster config | `src/v2/config/types/product_cluster.py` |
 | 5. Engine ✅ | Wire everything together | `src/v2/engine/engine.py` |
-| 6. Integration | New API endpoints | `src/handlers/worker.py` (v2 routes) |
+| 6. Integration ✅ | v2 API endpoints | `src/handlers/worker.py` (v2 routes) |
 | 7. Frontend | Config-driven UI | `frontend/` |
 | 8. Cleanup | Remove old code | Delete `src/services/`, old models |
 
@@ -940,12 +940,113 @@ Consider:
 
 ---
 
+## Phase 6: Integration ✅
+
+### Goal
+
+Wire v2 CreativeEngine into worker.py for safe testing alongside v1.
+
+### Routing Strategy
+
+| creative_type | Path | Notes |
+|---------------|------|-------|
+| `standard` | v1 | unchanged |
+| `product_cluster` | v1 | unchanged |
+| `product_cluster_v2` | **v2** | new, for testing |
+
+Using `product_cluster_v2` allows safe A/B testing - both paths produce equivalent Monday.com output.
+
+### Files Modified
+
+| File | Changes |
+|------|---------|
+| `src/v2/config/types/__init__.py` | Register as `product_cluster_v2` (not `product_cluster`) |
+| `src/handlers/worker.py` | Add v2 imports, routing, and handler functions |
+
+### Implementation
+
+#### 1. Early Routing in handler()
+
+```python
+# Route v2 creative types
+creative_type = body.get("creative_type", "standard")
+if creative_type in list_creative_types():
+    return _handle_v2(body)
+
+# v1 path continues below...
+```
+
+#### 2. v2 Handler Functions
+
+```python
+def _handle_v2(body: dict) -> dict:
+    """Handle v2 creative type request."""
+    # 1. Build v2 Topic (universal fields only)
+    topic = TopicV2(name=..., event=..., discount=..., page_type=..., url=...)
+
+    # 2. Get config
+    config = get_creative_type(creative_type)
+
+    # 3. Extract inputs and options (config-driven)
+    inputs = _extract_inputs(body, config)
+    options = _extract_options(body, config)
+
+    # 4. Initialize clients & engine
+    engine = CreativeEngine(llm=..., gemini=..., removebg=..., creative=...)
+
+    # 5. Generate creatives
+    creatives = engine.generate(topic, config, inputs, options, count=12)
+
+    # 6. Upload to Monday
+    return _upload_v2_creatives(topic, creatives)
+
+
+def _extract_inputs(body: dict, config) -> dict:
+    """Extract inputs defined by config from request body."""
+    # Iterates config.inputs, validates required fields
+
+def _extract_options(body: dict, config) -> dict:
+    """Extract options (toggles, generator options) from request body."""
+    # 1. Slot toggles (e.g., include_header from slot.ui.option_name)
+    # 2. Generator options (e.g., is_people_mode from generator.OPTIONS)
+
+def _upload_v2_creatives(topic, creatives) -> dict:
+    """Upload v2 creatives to Monday, return response."""
+    # Groups into campaigns of 3, uploads images, returns response
+    # Note: No 'texts' in response - nobody consumes it
+```
+
+### Key Decisions
+
+1. **Safe testing** - `product_cluster_v2` routes to v2, `product_cluster` stays v1
+2. **Separate upload function** - `_upload_v2_creatives()` separate from v1 for clean deletion later
+3. **No texts in response** - Investigation showed nobody consumes the `texts` field in Lambda response (SQS discards it)
+4. **Config-driven extraction** - Inputs/options extracted based on config definitions, not hardcoded
+
+### Testing
+
+```bash
+# v1 path (unchanged)
+python -m src.handlers.worker "Girls Bracelet Kit" "Black Friday" "50%" category product_cluster '{"product_image_urls": ["url1", "url2", "url3"]}'
+
+# v2 path (new)
+python -m src.handlers.worker "Girls Bracelet Kit" "Black Friday" "50%" category product_cluster_v2 '{"product_image_urls": ["url1", "url2", "url3"]}'
+```
+
+Both should produce equivalent Monday.com output. Compare results to validate v2.
+
+---
+
 ## Current Status
 
-**Phases 1-5 Complete.** The v2 engine is fully implemented:
+**Phases 1-6 Complete.** The v2 engine is fully implemented and integrated:
 - Models: Topic, Creative, Slot, CreativeTypeConfig
 - Generators: text.header, text.main_text, image.cluster
 - Config: product_cluster with variants/variant_sequence
 - Engine: CreativeEngine with _resolve_sources, _build_creatives, _build_layers
+- Integration: worker.py routes `product_cluster_v2` to v2 engine
 
-**Next**: Phase 6 (Integration) - wire engine to worker/API endpoints.
+**Next**:
+- Test v2 path with real data, compare output to v1
+- Phase 7 (Frontend) - config-driven UI
+- Phase 8 (Cleanup) - once v2 validated, rename `product_cluster_v2` → `product_cluster`, delete v1 code
