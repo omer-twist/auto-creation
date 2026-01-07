@@ -1,6 +1,7 @@
 """Creative type configuration."""
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from .slot import Slot
 
@@ -16,10 +17,10 @@ class InputField:
 
 @dataclass
 class CreativeTypeConfig:
-    """Configuration for a creative type. THIN - just wiring."""
-    name: str
+    """Configuration for a creative type. CreativeType IS the template."""
+    name: str                            # Template identifier
     display_name: str
-    template_uuid: str
+    variants: dict[str, str]             # {"dark": UUID, "light": UUID} - physical Placid files
+    variant_sequence: list[str] | None   # ["dark", "light"] * 6, or None for single variant
     slots: list[Slot]
     inputs: list[InputField] = field(default_factory=list)
-    style_pool: str = "default"

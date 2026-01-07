@@ -123,6 +123,35 @@ class CreativeClient:
         except requests.RequestException as e:
             raise RuntimeError(f"Failed to upload media to Placid: {e}")
 
+    def submit_generic_job(
+        self, template_uuid: str, layers: dict[str, dict]
+    ) -> int | None:
+        """
+        Submit a generic job with arbitrary layers.
+
+        Args:
+            template_uuid: Placid template UUID
+            layers: Dict of layer_name -> {property: value}
+
+        Returns:
+            Job ID or None on error
+        """
+        url = f"{self.base_url}/{template_uuid}"
+        headers = self._get_headers()
+
+        payload = {
+            "create_now": False,
+            "layers": layers,
+        }
+
+        try:
+            response = self._request_with_retry("POST", url, headers, json=payload)
+            response.raise_for_status()
+            data = response.json()
+            return data.get("id")
+        except requests.RequestException:
+            return None
+
     def submit_product_cluster_job(
         self,
         header_text: str,

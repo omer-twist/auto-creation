@@ -1,21 +1,13 @@
-"""Creative output model - field names match Placid layers for optimization traceability."""
+"""Creative output model - generic, DB-friendly, works for any creative type."""
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
 class Creative:
-    """Field names match Placid layers for optimization traceability."""
-    # Placid layer values (what we sent)
-    main_text: str                        # main_text.text
-    background_color: str                 # bg.background_color
-    main_text_color: str                  # main_text.text_color
-    font: str                             # main_text.font
-    header_text: str | None = None        # header.text
-    header_text_color: str | None = None  # header.text_color
-    cluster_image_url: str | None = None  # image.image (input to Placid)
-
-    # Output (what Placid returns)
-    image_url: str = ""                   # The generated creative image
-
-    # Future: id, campaign_id, parent_id (for variations), metadata
+    """Generic creative - stores layers dict for any creative type."""
+    creative_type: str       # "product_cluster", "banner", etc.
+    variant: str             # "dark", "light", "default"
+    layers: dict[str, Any]   # Inputs sent to Placid (layer_name -> {prop: value})
+    creative_url: str        # Final rendered output from Placid

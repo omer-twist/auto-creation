@@ -11,7 +11,7 @@ from ....clients.removebg import RemoveBgClient
 from ....clients.creative import CreativeClient
 
 
-@register("image/cluster")
+@register("image.cluster")
 class ClusterImageGenerator(ImageGenerator):
     """Generates product cluster images from product URLs."""
 

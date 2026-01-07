@@ -1,8 +1,11 @@
 """Creative types registry."""
 
 from ...models.config import CreativeTypeConfig
+from .product_cluster import PRODUCT_CLUSTER_CONFIG
 
-CREATIVE_TYPES: dict[str, CreativeTypeConfig] = {}
+CREATIVE_TYPES: dict[str, CreativeTypeConfig] = {
+    "product_cluster": PRODUCT_CLUSTER_CONFIG,
+}
 
 
 def get_creative_type(name: str) -> CreativeTypeConfig:

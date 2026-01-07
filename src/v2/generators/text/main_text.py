@@ -1,30 +1,16 @@
-"""Main text generator - generates (header, main_text) pairs."""
+"""Main text generator."""
 
 from pathlib import Path
 
-from ..base import Generator, GeneratorOption
+from ..base import Generator
 from .. import register
 from ...models.context import GenerationContext
 from src.clients.llm import LLMClient
 
 
-def generate_header(topic_name: str) -> str:
-    """Header is always the topic name uppercased."""
-    return topic_name.upper()
-
-
-@register("text/main_text")
+@register("text.main_text")
 class MainTextGenerator(Generator):
-    """Generates (header, main_text) pairs for creatives."""
-
-    OPTIONS = [
-        GeneratorOption(
-            name="include_header",
-            type="toggle",
-            label="Include Header",
-            default=True,
-        ),
-    ]
+    """Generates main text lines for creatives."""
 
     def __init__(self, llm: LLMClient | None = None):
         self.llm = llm
@@ -34,22 +20,19 @@ class MainTextGenerator(Generator):
         prompt_path = Path(__file__).parents[2] / "prompts" / "main_text.txt"
         return prompt_path.read_text()
 
-    def generate(self, context: GenerationContext) -> list[tuple[str, str]]:
+    def generate(self, context: GenerationContext) -> list[str]:
         """
-        Generate (header, main_text) pairs.
+        Generate main text lines.
 
         If main_lines provided in inputs, use those directly.
         Otherwise, call LLM to generate main texts.
         """
-        header = generate_header(context.topic.name)
-
         # Check for override
         if main_lines := context.inputs.get("main_lines"):
-            return [(header, line) for line in main_lines[:context.count]]
+            return list(main_lines[:context.count])
 
         # Generate via LLM
-        main_texts = self._generate_via_llm(context)
-        return [(header, text) for text in main_texts]
+        return self._generate_via_llm(context)
 
     def _generate_via_llm(self, context: GenerationContext) -> list[str]:
         """Call LLM with single prompt, parse output."""
