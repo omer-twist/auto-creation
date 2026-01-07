@@ -572,7 +572,7 @@ When v2 is complete and tested, we switch over and delete old code.
 |-------|------|-----------|
 | 1. Foundation ✅ | Models and registries | `src/v2/models/`, `src/v2/generators/base.py` |
 | 2. Text Generator ✅ | Main text generation | `src/v2/generators/text/main_text.py`, `src/v2/prompts/main_text.txt` |
-| 3. Image Generator | Extract image generation | `src/v2/generators/image/cluster.py` |
+| 3. Image Generator ✅ | Extract image generation | `src/v2/generators/image/cluster.py` |
 | 4. Config | Create product_cluster config | `src/v2/config/types/product_cluster.py` |
 | 5. Engine | Wire everything together | `src/v2/engine/engine.py` |
 | 6. Integration | New API endpoints | `src/handlers/worker.py` (v2 routes) |
@@ -595,6 +595,34 @@ When v2 is complete and tested, we switch over and delete old code.
 - **Main Text** = LLM-generated via single prompt
 - **Override** = if `main_lines` provided, skip LLM
 - **Prompt** = simplified, just topic name (EVENT/DISCOUNT rules removed for now)
+
+---
+
+## Phase 3: Image Generator ✅
+
+### Files Created
+
+1. **`src/v2/generators/image/__init__.py`** - exports ImageGenerator, ClusterImageGenerator
+2. **`src/v2/generators/image/base.py`** - ImageGenerator base class
+3. **`src/v2/generators/image/cluster.py`** - ClusterImageGenerator
+
+### Architecture
+
+- **ImageGenerator** base class with shared post-processing (remove.bg, crop, upload)
+- **ClusterImageGenerator** extends base, adds product cluster logic (download, Gemini)
+- Template method pattern: `generate()` → `_generate_raw()` → `_post_process()` → `_upload()`
+
+### Deferred Decisions (Refine in Phase 4/5)
+
+- **Upload location:** Currently inside generator. May extract to engine later for flexibility.
+- **aspect_ratio source:** Currently from `context.inputs`. May move to slot/template config.
+- **Post-processing options:** `remove_bg` and `crop` read from `context.options`, defaults True.
+
+### Key Decisions
+
+- Generators return `list[str]` (single-element list with URL, engine broadcasts)
+- Flexible aspect ratio - any Gemini-supported ratio works
+- Uses existing clients directly: `GeminiClient`, `RemoveBgClient`, `CreativeClient`
 
 ---
 
