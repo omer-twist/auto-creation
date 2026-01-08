@@ -42,7 +42,7 @@ class CreativeEngine:
         source_results = self._resolve_sources(topic, config, inputs, options, count)
 
         # 2. Build and submit Placid jobs for each creative
-        creatives = self._build_creatives(config, source_results, options, count)
+        creatives = self._build_creatives(config, source_results, inputs, count)
 
         return creatives
 
@@ -106,7 +106,7 @@ class CreativeEngine:
         self,
         config: CreativeTypeConfig,
         source_results: dict[str, list[Any]],
-        options: dict[str, Any],
+        inputs: dict[str, Any],
         count: int,
     ) -> list[Creative]:
         """Build creatives by submitting Placid jobs."""
@@ -122,7 +122,7 @@ class CreativeEngine:
                 variant = list(config.variants.keys())[0]  # first/only
             variant_uuid = config.variants[variant]
 
-            layers = self._build_layers(config, source_results, options, i)
+            layers = self._build_layers(config, source_results, inputs, i)
             job_id = self.creative.submit_generic_job(variant_uuid, layers)
             job_ids.append((job_id, layers, variant))
 
@@ -143,16 +143,17 @@ class CreativeEngine:
         self,
         config: CreativeTypeConfig,
         source_results: dict[str, list[Any]],
-        options: dict[str, Any],
+        inputs: dict[str, Any],
         index: int,
     ) -> dict[str, dict[str, Any]]:
         """Build Placid layers dict from slots."""
         layers: dict[str, dict[str, Any]] = {}
 
         for slot in config.slots:
-            # Check if slot is toggled off
-            if slot.ui and slot.ui.toggleable:
-                if not options.get(slot.ui.option_name, slot.ui.toggle_default):
+            # Check if slot is toggled off (optional slots can be excluded)
+            if slot.optional:
+                toggle_name = f"include_{slot.name.split('.')[0]}"  # "header.text" -> "include_header"
+                if not inputs.get(toggle_name, True):  # Default to included
                     continue  # Skip this slot
 
             # Uniform value lookup - modulo indexing (cycles through results)

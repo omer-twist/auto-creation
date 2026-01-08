@@ -2,8 +2,8 @@
 
 import os
 
-from ...models.config import CreativeTypeConfig, InputField
-from ...models.slot import Slot, SlotUI
+from ...models.config import CreativeTypeConfig
+from ...models.slot import Slot
 
 
 PRODUCT_CLUSTER_CONFIG = CreativeTypeConfig(
@@ -14,30 +14,13 @@ PRODUCT_CLUSTER_CONFIG = CreativeTypeConfig(
         "light": os.getenv("PLACID_PRODUCT_CLUSTER_TEMPLATE_UUID_WHITE", ""),
     },
     variant_sequence=["dark", "light"] * 6,  # 12 alternating
-    inputs=[
-        InputField(
-            name="product_image_urls",
-            type="url_list",
-            label="Product Image URLs (1-8)",
-            required=True,
-        ),
-        InputField(
-            name="main_lines",
-            type="text_list",
-            label="Main Text Lines (optional override)",
-            required=False,
-        ),
-    ],
+    # Note: inputs come from generators (INPUTS), collected by serializer
     slots=[
         Slot(
             name="header.text",
             source="text.header",
-            ui=SlotUI(
-                toggleable=True,
-                toggle_label="Include Header",
-                toggle_default=True,
-                option_name="include_header",
-            ),
+            optional=True,
+            label="Header",
         ),
         Slot(name="main_text.text", source="text.main_text"),
         Slot(

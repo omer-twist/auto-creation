@@ -1037,16 +1037,299 @@ Both should produce equivalent Monday.com output. Compare results to validate v2
 
 ---
 
+## Phase 7: Frontend ✅ (with known issue)
+
+### Goal
+
+Config-driven UI that fetches field definitions from API and renders dynamic forms.
+
+### Architecture
+
+```
+Frontend                    Backend
+   │                          │
+   │  GET /config             │
+   │ ───────────────────────► │
+   │                          │  serialize_all() collects:
+   │                          │  - INPUTS from generators
+   │                          │  - toggle fields from optional slots
+   │  {product_cluster_v2:    │
+   │    fields: [...]}        │
+   │ ◄─────────────────────── │
+   │                          │
+   │  Render dynamic fields   │
+   │  based on field.type     │
+   │                          │
+   │  POST / (submit)         │
+   │ ───────────────────────► │  → SQS → Worker → Monday
+```
+
+### Files Created/Modified
+
+| File | Changes |
+|------|---------|
+| `src/v2/api/serializers.py` | `serialize_all()` - collects fields from generators, creates toggle fields for optional slots |
+| `src/v2/models/config.py` | Added `Field` and `Condition` dataclasses for generic UI primitives |
+| `src/v2/generators/*.py` | Generators declare `INPUTS` (list of Field) |
+| `src/handlers/enqueue.py` | Added `GET /config` route, fixed import to `from src.v2.api.serializers` |
+| `frontend/app.js` | Generic field renderer - fetches config, renders fields by type |
+| `frontend/index.html` | Base HTML with creative-type dropdown and dynamic-fields container |
+| `frontend/styles.css` | Styles for all field types |
+
+### Field Types
+
+| Type | Renders As | Value Type |
+|------|-----------|------------|
+| `text` | Single-line input | string |
+| `textarea` | Multi-line input | string[] (lines) |
+| `list` | Add button + items list | string[] |
+| `toggle` | Toggle switch | boolean |
+| `select` | Dropdown | string |
+
+### API Response Shape
+
+```json
+{
+  "product_cluster_v2": {
+    "displayName": "Product Cluster",
+    "fields": [
+      {"name": "is_people_mode", "type": "toggle", "label": "People Mode", "default": false},
+      {"name": "include_header", "type": "toggle", "label": "Header", "default": true},
+      {"name": "product_image_urls", "type": "list", "label": "Product Image URLs", "required": true},
+      {"name": "main_lines", "type": "textarea", "label": "Main Text Lines", "required": false}
+    ]
+  }
+}
+```
+
+### Infrastructure Changes
+
+Significant infrastructure changes were made to support the frontend:
+
+#### 1. Enqueue Lambda: Zip → Docker
+
+Converted enqueue from zip-based to Docker-based deployment:
+
+**Before:**
+```hcl
+resource "aws_lambda_function" "enqueue" {
+  handler       = "handlers.enqueue.handler"
+  runtime       = "python3.11"
+  filename      = data.archive_file.enqueue.output_path
+  # ... complex zip creation with archive_file
+}
+```
+
+**After:**
+```hcl
+resource "aws_lambda_function" "enqueue" {
+  package_type  = "Image"
+  image_uri     = "${aws_ecr_repository.worker.repository_url}:latest"
+  image_config {
+    command = ["src.handlers.enqueue.handler"]
+  }
+  # ... shares same Docker image as worker
+}
+```
+
+**Benefits:**
+- Both lambdas use same Docker image (simpler deployment)
+- No zip packaging complexity (`archive_file`, `null_resource` removed)
+- Consistent import paths (`from src.v2...` works everywhere)
+
+**Trade-off:**
+- Heavier cold starts (~5-7s) due to loading all dependencies
+- Increased timeout from 10s → 30s to accommodate
+
+#### 2. Worker Memory Increase
+
+```hcl
+memory_size = 256  # Before: 93-97% usage, risk of OOM
+memory_size = 512  # After: ~50% usage, faster image processing
+```
+
+#### 3. CORS Fix
+
+Removed duplicate CORS header from handler (terraform's Lambda Function URL config already sets it):
+
+```python
+# Before: Double header "*, *" caused CORS error
+"Access-Control-Allow-Origin": "*"  # REMOVED
+
+# After: Only terraform sets CORS
+```
+
+### Known Issue: Background Color
+
+**Bug:** v2 produces creatives with the same background color for all variants.
+
+**Expected:** Alternating dark/light variants based on `variant_sequence = ["dark", "light"] * 6`
+
+**Observed:** All creatives have same background color, but other styling varies correctly (fonts, etc.)
+
+**Likely cause:** Either:
+1. `variant_sequence` not being applied correctly in engine
+2. Both Placid template UUIDs (`dark`/`light`) have same background
+3. Something overriding the template's background in layers
+
+**Status:** To be investigated and fixed.
+
+### Testing
+
+Full flow tested and working:
+1. ✅ Frontend loads config from `/config` API
+2. ✅ Dynamic fields render based on field types
+3. ✅ Form submission sends to enqueue
+4. ✅ SQS triggers worker
+5. ✅ Worker processes via v2 engine
+6. ✅ Creatives uploaded to Monday.com
+7. ⚠️ Background color bug (variants not alternating)
+
+---
+
+## Local Development Setup
+
+Before Phase 8, set up local development to reduce reliance on production Lambda for testing.
+
+### Option 1: Simple Flask Dev Server (Recommended)
+
+Minimal setup - serves frontend and calls handlers directly without SQS.
+
+**Create `dev_server.py`:**
+
+```python
+"""Local dev server - serves frontend and calls handlers directly."""
+
+from flask import Flask, request, jsonify, send_from_directory
+from src.v2.api.serializers import serialize_all
+from src.handlers.worker import handler as worker_handler
+
+app = Flask(__name__)
+
+@app.route('/config')
+def config():
+    """Serve creative type configs (same as enqueue Lambda)."""
+    return jsonify(serialize_all())
+
+@app.route('/', methods=['POST'])
+def enqueue():
+    """Call worker directly (bypasses SQS)."""
+    event = {"Records": [{"body": request.data.decode()}]}
+    result = worker_handler(event, None)
+    return jsonify(result)
+
+@app.route('/')
+def index():
+    return send_from_directory('frontend', 'index.html')
+
+@app.route('/<path:path>')
+def frontend(path):
+    return send_from_directory('frontend', path)
+
+if __name__ == '__main__':
+    app.run(port=3000, debug=True)
+```
+
+**Setup:**
+
+```bash
+pip install flask
+python dev_server.py
+# Open http://localhost:3000
+```
+
+**Pros:**
+- ~20 lines of code
+- No AWS emulation needed
+- Fast iteration (debug=True auto-reloads)
+- Same code paths as production (just skips SQS)
+
+**Cons:**
+- No SQS queue behavior (batching, retries, DLQ)
+- Synchronous (blocks until worker completes)
+
+### Option 2: LocalStack
+
+Full AWS emulation - Lambda, SQS, everything local.
+
+**Setup:**
+
+```bash
+pip install localstack awscli-local
+localstack start
+
+# Create resources
+awslocal sqs create-queue --queue-name campaigns
+awslocal lambda create-function \
+  --function-name worker \
+  --runtime python3.11 \
+  --handler src.handlers.worker.handler \
+  --zip-file fileb://lambda.zip
+
+# Wire SQS trigger
+awslocal lambda create-event-source-mapping \
+  --function-name worker \
+  --event-source-arn arn:aws:sqs:us-east-1:000000000000:campaigns
+```
+
+**Pros:**
+- Full AWS parity (SQS batching, Lambda concurrency, DLQ)
+- Test infrastructure changes locally
+- Terraform can target LocalStack
+
+**Cons:**
+- Heavier setup
+- Docker required
+- Slower than Flask approach
+
+### Option 3: SAM Local
+
+Official AWS tool - runs Lambda locally with Docker.
+
+**Setup:**
+
+```bash
+pip install aws-sam-cli
+
+# Create template.yaml (SAM format) or use existing terraform
+sam local start-api  # HTTP API
+sam local invoke worker --event test_event.json  # Direct invoke
+```
+
+**Pros:**
+- Official AWS tool
+- Good Lambda debugging
+- Supports layers and container images
+
+**Cons:**
+- Requires SAM template (parallel to terraform)
+- Docker required
+- Less flexible than Flask for rapid iteration
+
+### Recommendation
+
+Start with **Option 1 (Flask)** for daily development:
+- Fastest setup and iteration
+- Good enough for 90% of development work
+- Add LocalStack later if you need to test SQS-specific behavior
+
+---
+
 ## Current Status
 
-**Phases 1-6 Complete.** The v2 engine is fully implemented and integrated:
-- Models: Topic, Creative, Slot, CreativeTypeConfig
-- Generators: text.header, text.main_text, image.cluster
-- Config: product_cluster with variants/variant_sequence
-- Engine: CreativeEngine with _resolve_sources, _build_creatives, _build_layers
+**Phases 1-7 Complete** (with known issue):
+- Models: Topic, Creative, Slot, CreativeTypeConfig, Field, Condition
+- Generators: text.header, text.main_text, image.cluster (with INPUTS declarations)
+- Config: product_cluster_v2 with variants/variant_sequence
+- Engine: CreativeEngine with full pipeline
 - Integration: worker.py routes `product_cluster_v2` to v2 engine
+- API: `/config` endpoint serves field definitions
+- Frontend: Generic field renderer, dynamic forms
+- Infrastructure: Both lambdas on Docker, increased memory/timeout
+
+**Known Bug:**
+- v2 creatives all have same background color (variant alternation not working)
 
 **Next**:
-- Test v2 path with real data, compare output to v1
-- Phase 7 (Frontend) - config-driven UI
+- Fix background color bug (variant_sequence or template issue)
 - Phase 8 (Cleanup) - once v2 validated, rename `product_cluster_v2` → `product_cluster`, delete v1 code

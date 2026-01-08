@@ -1,7 +1,7 @@
 """Generator registry."""
 
 from typing import Type
-from .base import Generator, GeneratorOption
+from .base import Generator
 
 _GENERATORS: dict[str, Type[Generator]] = {}
 
@@ -36,7 +36,6 @@ def list_generators() -> list[str]:
 
 __all__ = [
     "Generator",
-    "GeneratorOption",
     "register",
     "get_generator_class",
     "list_generators",

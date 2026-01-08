@@ -3,8 +3,8 @@
 from .topic import Topic
 from .campaign import Campaign, group_into_campaigns
 from .creative import Creative
-from .slot import Slot, SlotUI
-from .config import CreativeTypeConfig, InputField
+from .slot import Slot
+from .config import CreativeTypeConfig, Field, Condition
 from .context import GenerationContext
 
 __all__ = [
@@ -13,8 +13,8 @@ __all__ = [
     "group_into_campaigns",
     "Creative",
     "Slot",
-    "SlotUI",
     "CreativeTypeConfig",
-    "InputField",
+    "Field",
+    "Condition",
     "GenerationContext",
 ]

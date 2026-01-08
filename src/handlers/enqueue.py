@@ -1,4 +1,4 @@
-"""AWS Lambda handler for HTTP to SQS enqueue."""
+"""AWS Lambda handler for HTTP to SQS enqueue + config API."""
 
 import base64
 import json
@@ -7,15 +7,29 @@ import os
 import boto3
 
 sqs = boto3.client("sqs")
-QUEUE_URL = os.environ["QUEUE_URL"]
+QUEUE_URL = os.environ.get("QUEUE_URL", "")
 
 
 def handler(event, context):
     """
-    HTTP to SQS proxy.
+    HTTP router for enqueue and config endpoints.
 
-    Receives HTTP request and queues the body to SQS for async processing.
+    GET /config - Returns creative type configurations
+    POST /      - Queues request body to SQS
     """
+    method = event.get("requestContext", {}).get("http", {}).get("method", "POST")
+    path = event.get("rawPath", "/")
+
+    # GET /config - serve creative type configs
+    if method == "GET" and path == "/config":
+        from src.v2.api.serializers import serialize_all
+        return {
+            "statusCode": 200,
+            "headers": {"Content-Type": "application/json"},
+            "body": json.dumps(serialize_all()),
+        }
+
+    # POST / - enqueue to SQS
     body = event.get("body", "{}")
 
     if event.get("isBase64Encoded"):

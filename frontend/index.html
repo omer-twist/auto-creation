@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campaign Queue</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Campaign Queue</h1>
+
+    <div class="card">
+      <form id="campaign-form">
+        <!-- Creative Type -->
+        <div class="form-row">
+          <label for="creative-type">Type</label>
+          <div class="input-wrapper">
+            <div class="input-area">
+              <select id="creative-type"></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Topic -->
+        <div class="form-row">
+          <label for="topic">Topic</label>
+          <div class="input-wrapper">
+            <div class="input-area">
+              <input type="text" id="topic" placeholder="e.g., Girls Bracelet Making Kit">
+            </div>
+            <div class="error-message" id="topic-error"></div>
+          </div>
+        </div>
+
+        <!-- URL -->
+        <div class="form-row">
+          <label for="url">URL</label>
+          <div class="input-wrapper">
+            <div class="input-area">
+              <input type="text" id="url" placeholder="https://bestselling.today/...">
+            </div>
+            <div class="error-message" id="url-error"></div>
+          </div>
+        </div>
+
+        <!-- Page Type -->
+        <div class="form-row">
+          <label for="page-type">Page Type</label>
+          <div class="input-wrapper">
+            <div class="input-area">
+              <select id="page-type">
+                <option value="" selected>-- Select --</option>
+                <option value="general">General</option>
+                <option value="category">Category</option>
+              </select>
+            </div>
+            <div class="error-message" id="page-type-error"></div>
+          </div>
+        </div>
+
+        <!-- Discount -->
+        <div class="form-row">
+          <label for="discount-type">Discount</label>
+          <div class="input-wrapper">
+            <div class="input-area">
+              <select id="discount-type">
+                <option value="none">None</option>
+                <option value="constant">Constant</option>
+                <option value="upto">Up to</option>
+                <option value="24h">24h</option>
+              </select>
+              <input type="text" id="discount-value" class="conditional-input" placeholder="%">
+            </div>
+            <div class="error-message" id="discount-error"></div>
+          </div>
+        </div>
+
+        <!-- Event -->
+        <div class="form-row">
+          <label for="event-type">Event</label>
+          <div class="input-wrapper">
+            <div class="input-area">
+              <select id="event-type">
+                <option value="none">None</option>
+                <option value="custom">Custom</option>
+              </select>
+              <input type="text" id="event-name" class="conditional-input" placeholder="e.g., Black Friday">
+            </div>
+            <div class="error-message" id="event-error"></div>
+          </div>
+        </div>
+
+        <!-- Dynamic fields (config-driven) -->
+        <div id="dynamic-fields"></div>
+
+        <button type="submit" class="btn btn-primary btn-add">+ Add Campaign</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <table id="queue-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Type</th>
+            <th>Topic</th>
+            <th>URL</th>
+            <th>Page</th>
+            <th>Discount</th>
+            <th>Event</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="queue-body">
+        </tbody>
+      </table>
+      <div id="empty-state" class="empty-state">No campaigns queued</div>
+
+      <div class="footer">
+        <span id="count" class="count">0 campaigns queued</span>
+        <button id="send-btn" class="btn btn-primary" disabled>Send All</button>
+      </div>
+
+      <div id="status"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

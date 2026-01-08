@@ -8,7 +8,7 @@ resource "aws_lambda_function" "worker" {
   package_type  = "Image"
   image_uri     = "${aws_ecr_repository.worker.repository_url}:latest"
   timeout       = 300 # 5 minutes
-  memory_size   = 256
+  memory_size   = 512
 
   environment {
     variables = {
@@ -40,31 +40,28 @@ resource "aws_lambda_event_source_mapping" "worker_sqs" {
 }
 
 # =============================================================================
-# Enqueue Lambda (inline) - receives HTTP, queues to SQS
+# Enqueue Lambda (image-based) - receives HTTP, queues to SQS
 # =============================================================================
 
 resource "aws_lambda_function" "enqueue" {
   function_name = "${var.function_name}-enqueue"
   role          = aws_iam_role.lambda.arn
-  handler       = "enqueue.handler"
-  runtime       = "python3.11"
-  timeout       = 10
+  package_type  = "Image"
+  image_uri     = "${aws_ecr_repository.worker.repository_url}:latest"
+  timeout       = 30
   memory_size   = 128
 
-  filename         = data.archive_file.enqueue.output_path
-  source_code_hash = data.archive_file.enqueue.output_base64sha256
+  image_config {
+    command = ["src.handlers.enqueue.handler"]
+  }
 
   environment {
     variables = {
       QUEUE_URL = aws_sqs_queue.campaigns.url
     }
   }
-}
 
-data "archive_file" "enqueue" {
-  type        = "zip"
-  output_path = "${path.module}/enqueue.zip"
-  source_file = "${path.module}/../src/handlers/enqueue.py"
+  depends_on = [aws_ecr_repository.worker]
 }
 
 # Function URL for enqueue (HTTP endpoint)
@@ -74,7 +71,7 @@ resource "aws_lambda_function_url" "enqueue" {
 
   cors {
     allow_origins = ["*"]
-    allow_methods = ["POST"]
+    allow_methods = ["GET", "POST"]
     allow_headers = ["content-type"]
   }
 }

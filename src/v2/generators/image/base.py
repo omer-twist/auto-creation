@@ -2,7 +2,6 @@
 
 from abc import abstractmethod
 from io import BytesIO
-from typing import Any
 
 from PIL import Image
 

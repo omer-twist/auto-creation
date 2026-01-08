@@ -5,12 +5,22 @@ from pathlib import Path
 from ..base import Generator
 from .. import register
 from ...models.context import GenerationContext
+from ...models.config import Field
 from src.clients.llm import LLMClient
 
 
 @register("text.main_text")
 class MainTextGenerator(Generator):
     """Generates main text lines for creatives."""
+
+    INPUTS = [
+        Field(
+            name="main_lines",
+            type="textarea",
+            label="Main Text Lines",
+            required=False,
+        ),
+    ]
 
     def __init__(self, llm: LLMClient | None = None):
         self.llm = llm

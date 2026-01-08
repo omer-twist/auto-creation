@@ -3,9 +3,9 @@
 import requests
 
 from .. import register
-from ..base import GeneratorOption
 from .base import ImageGenerator
 from ...models.context import GenerationContext
+from ...models.config import Field
 from ....clients.gemini import GeminiClient
 from ....clients.removebg import RemoveBgClient
 from ....clients.creative import CreativeClient
@@ -15,8 +15,14 @@ from ....clients.creative import CreativeClient
 class ClusterImageGenerator(ImageGenerator):
     """Generates product cluster images from product URLs."""
 
-    OPTIONS = [
-        GeneratorOption(
+    INPUTS = [
+        Field(
+            name="product_image_urls",
+            type="list",
+            label="Product Image URLs",
+            required=True,
+        ),
+        Field(
             name="is_people_mode",
             type="toggle",
             label="People Mode",
@@ -38,7 +44,7 @@ class ClusterImageGenerator(ImageGenerator):
         # Get inputs
         image_urls = context.inputs.get("product_image_urls", [])
         aspect_ratio = context.inputs.get("aspect_ratio", "16:9")
-        is_people_mode = context.options.get("is_people_mode", False)
+        is_people_mode = context.inputs.get("is_people_mode", False)
 
         # Validate
         if not 1 <= len(image_urls) <= 8:

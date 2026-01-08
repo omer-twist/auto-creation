@@ -1,25 +1,17 @@
-"""Generator base class and option definition."""
+"""Generator base class."""
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import Any
 
 from ..models.context import GenerationContext
-
-
-@dataclass
-class GeneratorOption:
-    """Simplified - just toggles for now (is_people_mode, include_header)."""
-    name: str
-    type: str       # "toggle" for now
-    label: str      # UI display text
-    default: Any
+from ..models.config import Field
 
 
 class Generator(ABC):
     """Base class for generators."""
 
-    OPTIONS: list[GeneratorOption] = []
+    # Generators declare what inputs they need
+    INPUTS: list[Field] = []
 
     @abstractmethod
     def generate(self, context: GenerationContext) -> list[Any]:
@@ -27,6 +19,6 @@ class Generator(ABC):
         pass
 
     @classmethod
-    def get_options(cls) -> list[GeneratorOption]:
-        """Get options this generator accepts."""
-        return cls.OPTIONS
+    def get_inputs(cls) -> list[Field]:
+        """Get input fields this generator needs."""
+        return cls.INPUTS

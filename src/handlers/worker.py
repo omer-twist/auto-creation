@@ -237,35 +237,34 @@ def _handle_v2(body: dict) -> dict:
 
 
 def _extract_inputs(body: dict, config) -> dict:
-    """Extract inputs defined by config from request body."""
+    """Extract all inputs from request body based on generator INPUTS and slot options."""
     inputs = {}
-    for input_field in config.inputs:
-        if input_field.name in body:
-            inputs[input_field.name] = body[input_field.name]
-        elif input_field.required:
-            raise ValueError(f"Missing required input: {input_field.name}")
+
+    # Collect from generator INPUTS
+    for slot in config.slots:
+        gen_class = get_generator_class(slot.source)
+        for field in getattr(gen_class, "INPUTS", []):
+            if field.name in body:
+                inputs[field.name] = body[field.name]
+            elif field.required:
+                raise ValueError(f"Missing required input: {field.name}")
+            elif field.default is not None:
+                inputs[field.name] = field.default
+
+    # Collect slot toggles (e.g., include_header)
+    for slot in config.slots:
+        if slot.optional:
+            toggle_name = f"include_{slot.name.split('.')[0]}"
+            inputs[toggle_name] = body.get(toggle_name, True)  # Default to included
+
     return inputs
 
 
 def _extract_options(body: dict, config) -> dict:
-    """Extract options (toggles, generator options) from request body."""
-    options = {}
-
-    # Slot toggles (e.g., include_header)
-    for slot in config.slots:
-        if slot.ui and slot.ui.option_name:
-            options[slot.ui.option_name] = body.get(
-                slot.ui.option_name,
-                slot.ui.toggle_default
-            )
-
-    # Generator options (e.g., is_people_mode)
-    for source in {s.source for s in config.slots}:
-        gen_class = get_generator_class(source)
-        for opt in getattr(gen_class, "OPTIONS", []):
-            options[opt.name] = body.get(opt.name, opt.default)
-
-    return options
+    """Extract internal processing options (not user-facing)."""
+    # Options now only contains internal settings, not user inputs
+    # User inputs (including toggles) go in inputs dict
+    return {}
 
 
 def _upload_v2_creatives(topic: TopicV2, creatives: list) -> dict:
