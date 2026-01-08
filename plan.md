@@ -1163,6 +1163,15 @@ Removed duplicate CORS header from handler (terraform's Lambda Function URL conf
 
 **Bug:** v2 produces creatives with the same background color for all variants.
 
+### TODO: Audit Unused Abstractions
+
+Check if these are actually needed:
+
+- [ ] `Condition` class - defined in config.py but never instantiated
+- [ ] `GeneratorOption` class - removed or never added?
+
+If not used by the 10 creative types, delete them.
+
 **Expected:** Alternating dark/light variants based on `variant_sequence = ["dark", "light"] * 6`
 
 **Observed:** All creatives have same background color, but other styling varies correctly (fonts, etc.)
