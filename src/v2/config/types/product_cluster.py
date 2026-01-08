@@ -21,6 +21,12 @@ PRODUCT_CLUSTER_CONFIG = CreativeTypeConfig(
             label="Product Image URLs (1-8)",
             required=True,
         ),
+        InputField(
+            name="main_lines",
+            type="text_list",
+            label="Main Text Lines (optional override)",
+            required=False,
+        ),
     ],
     slots=[
         Slot(
