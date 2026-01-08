@@ -1,5 +1,6 @@
 """Gemini Image Generation client (Nano Banana Pro / Gemini 3 Pro Image)."""
 
+import time
 from io import BytesIO
 
 from google import genai
@@ -15,6 +16,22 @@ class GeminiClient:
         # Use Gemini 3 Pro Image Preview (Nano Banana Pro)
         # Supports up to 14 input images (5 with high fidelity)
         self.model = "gemini-3-pro-image-preview"
+
+    def _call_with_retry(self, func, max_retries=5, retry_codes=(503, 429)):
+        """Retry API calls on transient errors with exponential backoff."""
+        for attempt in range(max_retries):
+            try:
+                return func()
+            except Exception as e:
+                error_str = str(e)
+                is_retryable = any(str(code) in error_str for code in retry_codes)
+
+                if not is_retryable or attempt == max_retries - 1:
+                    raise
+
+                wait_time = 2 ** attempt  # 1s, 2s, 4s
+                print(f"Gemini API error (attempt {attempt + 1}/{max_retries}), retrying in {wait_time}s: {e}", flush=True)
+                time.sleep(wait_time)
 
     def generate_product_cluster(
         self,
@@ -80,17 +97,19 @@ class GeminiClient:
         for img in pil_images:
             contents.append(img)
 
-        # Generate using Gemini 3 Pro Image with image config
-        response = self.client.models.generate_content(
-            model=self.model,
-            contents=contents,
-            config=types.GenerateContentConfig(
-                response_modalities=["IMAGE", "TEXT"],
-                image_config=types.ImageConfig(
-                    aspect_ratio=aspect_ratio,
-                    image_size="4K",
+        # Generate using Gemini 3 Pro Image with image config (with retry)
+        response = self._call_with_retry(
+            lambda: self.client.models.generate_content(
+                model=self.model,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    response_modalities=["IMAGE", "TEXT"],
+                    image_config=types.ImageConfig(
+                        aspect_ratio=aspect_ratio,
+                        image_size="4K",
+                    ),
                 ),
-            ),
+            )
         )
 
         # Extract generated image from response

@@ -3,11 +3,16 @@
 from .. import register
 from ..base import Generator, GeneratorOption
 from ...models.context import GenerationContext
+from src.clients.llm import LLMClient
 
 
 @register("text.header")
 class HeaderGenerator(Generator):
     """Generates header text (topic name uppercased)."""
+
+    def __init__(self, llm: LLMClient | None = None):
+        # Accept llm for interface consistency, but don't use it
+        pass
 
     OPTIONS = [
         GeneratorOption(
