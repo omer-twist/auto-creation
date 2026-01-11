@@ -36,4 +36,5 @@ class CreativeTypeConfig:
     variants: dict[str, str]             # {"dark": UUID, "light": UUID} - physical Placid files
     variant_sequence: list[str] | None   # ["dark", "light"] * 6, or None for single variant
     slots: list[Slot]
+    style_pool: list[dict[str, Any]] | None = None  # Static style values per creative
     # Note: Fields are now declared by generators (INPUTS) and collected by serializer

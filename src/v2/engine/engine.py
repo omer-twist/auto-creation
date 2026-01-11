@@ -54,37 +54,52 @@ class CreativeEngine:
         options: dict[str, Any],
         count: int,
     ) -> dict[str, list[Any]]:
-        """Resolve all sources (generators) to lists of values."""
+        """Resolve all sources (generators and style_pool) to lists of values."""
         results: dict[str, list[Any]] = {}
 
-        # Find unique generator sources and their configs
-        generator_sources = set()
+        # Find unique sources and their configs
+        sources = set()
         generator_configs = {}  # source -> generator_config
         for slot in config.slots:
-            generator_sources.add(slot.source)
+            sources.add(slot.source)
             if slot.generator_config:
                 generator_configs[slot.source] = slot.generator_config
 
-        # Run each generator
-        for source in generator_sources:
-            # Merge generator_config into inputs
-            merged_inputs = {**inputs}
-            if source in generator_configs:
-                merged_inputs.update(generator_configs[source])
+        # Resolve each source
+        for source in sources:
+            if source.startswith("style."):
+                # Handle style sources from style_pool
+                results[source] = self._resolve_style_source(source, config)
+            else:
+                # Handle generator sources
+                merged_inputs = {**inputs}
+                if source in generator_configs:
+                    merged_inputs.update(generator_configs[source])
 
-            # Build context
-            context = GenerationContext(
-                topic=topic,
-                inputs=merged_inputs,
-                options=options,
-                count=count,
-            )
+                context = GenerationContext(
+                    topic=topic,
+                    inputs=merged_inputs,
+                    options=options,
+                    count=count,
+                )
 
-            # Instantiate and run generator
-            generator = self._create_generator(source)
-            results[source] = generator.generate(context)
+                generator = self._create_generator(source)
+                results[source] = generator.generate(context)
 
         return results
+
+    def _resolve_style_source(
+        self, source: str, config: CreativeTypeConfig
+    ) -> list[Any]:
+        """Resolve style.* source from config.style_pool."""
+        if not config.style_pool:
+            raise ValueError(f"No style_pool defined for source: {source}")
+
+        # source = "style.background_color" → field = "background_color"
+        field = source.split(".", 1)[1]
+
+        # Extract field from each style dict
+        return [style[field] for style in config.style_pool]
 
     def _create_generator(self, source: str):
         """Create generator instance with appropriate clients."""

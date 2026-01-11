@@ -242,6 +242,9 @@ def _extract_inputs(body: dict, config) -> dict:
 
     # Collect from generator INPUTS
     for slot in config.slots:
+        # Skip style sources (they don't have generator classes)
+        if slot.source.startswith("style."):
+            continue
         gen_class = get_generator_class(slot.source)
         for field in getattr(gen_class, "INPUTS", []):
             if field.name in body:
