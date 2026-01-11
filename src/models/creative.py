@@ -1,18 +1,13 @@
-"""Creative model."""
+"""Creative output model - generic, DB-friendly, works for any creative type."""
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
 class Creative:
-    """A generated creative with text and image."""
-
-    text: str
-    image_url: str
-    background_color: str
-    text_color: str
-    font: str
-    # Product cluster fields (optional)
-    text_secondary: str | None = None
-    text_color_secondary: str | None = None
-    product_image_url: str | None = None
+    """Generic creative - stores layers dict for any creative type."""
+    creative_type: str       # "product_cluster", "banner", etc.
+    variant: str             # "dark", "light", "default"
+    layers: dict[str, Any]   # Inputs sent to Placid (layer_name -> {prop: value})
+    creative_url: str        # Final rendered output from Placid

@@ -4,8 +4,6 @@ import time
 
 import requests
 
-from ..models.styles import Style, ProductClusterStyle
-
 
 class CreativeClient:
     """Client for generating creative images (via Placid API)."""
@@ -45,33 +43,6 @@ class CreativeClient:
             return response
 
         return response
-
-    def submit_job(self, text: str, style: Style) -> int | None:
-        """Submit a single image job. Returns image_id or None on error."""
-        url = f"{self.base_url}/{self.template_uuid}"
-        headers = self._get_headers()
-
-        payload = {
-            "create_now": False,
-            "layers": {
-                "bg": {
-                    "background_color": style.background_color,
-                },
-                "text": {
-                    "text": text,
-                    "text_color": style.text_color,
-                    "font": style.font,
-                },
-            },
-        }
-
-        try:
-            response = self._request_with_retry("POST", url, headers, json=payload)
-            response.raise_for_status()
-            data = response.json()
-            return data.get("id")
-        except requests.RequestException:
-            return None
 
     def poll_job(self, image_id: int) -> tuple[str, str | None, str | None]:
         """Poll a single job. Returns (status, image_url, error)."""
@@ -138,64 +109,6 @@ class CreativeClient:
         """
         url = f"{self.base_url}/{template_uuid}"
         headers = self._get_headers()
-
-        payload = {
-            "create_now": False,
-            "layers": layers,
-        }
-
-        try:
-            response = self._request_with_retry("POST", url, headers, json=payload)
-            response.raise_for_status()
-            data = response.json()
-            return data.get("id")
-        except requests.RequestException:
-            return None
-
-    def submit_product_cluster_job(
-        self,
-        header_text: str,
-        main_text: str,
-        style: ProductClusterStyle,
-        product_image_url: str,
-        template_uuid: str,
-        include_header: bool = True,
-    ) -> int | None:
-        """
-        Submit a product cluster image job.
-
-        Args:
-            header_text: Header text for the creative
-            main_text: Main text for the creative
-            style: ProductClusterStyle with colors
-            product_image_url: URL to the product cluster image
-            template_uuid: Product cluster template UUID
-            include_header: Whether to include the header layer
-
-        Returns:
-            Image ID or None on error
-        """
-        url = f"{self.base_url}/{template_uuid}"
-        headers = self._get_headers()
-
-        layers = {
-            "bg": {
-                "background_color": style.background_color,
-            },
-            "main_text": {
-                "text": main_text,
-                "text_color": style.main_color,
-            },
-            "image": {
-                "image": product_image_url,
-            },
-        }
-
-        if include_header:
-            layers["header"] = {
-                "text": header_text,
-                "text_color": style.header_color,
-            }
 
         payload = {
             "create_now": False,

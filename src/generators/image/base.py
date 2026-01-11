@@ -7,8 +7,8 @@ from PIL import Image
 
 from ..base import Generator
 from ...models.context import GenerationContext
-from ....clients.removebg import RemoveBgClient
-from ....clients.creative import CreativeClient
+from ...clients.removebg import RemoveBgClient
+from ...clients.creative import CreativeClient
 
 
 class ImageGenerator(Generator):

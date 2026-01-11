@@ -6,7 +6,7 @@ from ..base import Generator
 from .. import register
 from ...models.context import GenerationContext
 from ...models.config import Field
-from src.clients.llm import LLMClient
+from ...clients.llm import LLMClient
 
 
 @register("text.main_text")

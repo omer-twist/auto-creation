@@ -1,10 +1,10 @@
 """Creative types registry."""
 
-from ...models.config import CreativeTypeConfig
+from ..models.config import CreativeTypeConfig
 from .product_cluster import PRODUCT_CLUSTER_CONFIG
 
 CREATIVE_TYPES: dict[str, CreativeTypeConfig] = {
-    "product_cluster_v2": PRODUCT_CLUSTER_CONFIG,  # v2 test name (keeps v1 working)
+    "product_cluster": PRODUCT_CLUSTER_CONFIG,
 }
 
 

@@ -22,7 +22,7 @@ def handler(event, context):
 
     # GET /config - serve creative type configs
     if method == "GET" and path == "/config":
-        from src.v2.api.serializers import serialize_all
+        from src.serializers import serialize_all
         return {
             "statusCode": 200,
             "headers": {"Content-Type": "application/json"},

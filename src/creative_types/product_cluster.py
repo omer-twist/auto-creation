@@ -2,8 +2,8 @@
 
 import os
 
-from ...models.config import CreativeTypeConfig
-from ...models.slot import Slot
+from ..models.config import CreativeTypeConfig
+from ..models.slot import Slot
 
 
 PRODUCT_CLUSTER_CONFIG = CreativeTypeConfig(

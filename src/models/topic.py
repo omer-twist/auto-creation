@@ -1,23 +1,13 @@
-"""Topic model - input for creative generation."""
+"""Simplified Topic - universal fields only."""
 
-from dataclasses import dataclass, field
-
-from .campaign import Campaign
+from dataclasses import dataclass
 
 
 @dataclass
 class Topic:
-    """A topic that generates 4 campaigns of 3 creatives each."""
-
+    """Universal fields for all creative types."""
     name: str
     event: str
     discount: str
     page_type: str
     url: str = ""
-    product_urls: list[str] = field(default_factory=list)
-    creative_type: str = "standard"  # "standard" or "product_cluster"
-    product_image_urls: list[str] = field(default_factory=list)  # 1-8 image URLs for product cluster
-    main_lines: list[str] = field(default_factory=list)  # 12 main text lines (skips LLM generation)
-    is_people_mode: bool = False  # Preserve original images (don't extract products from people)
-    include_header: bool = True  # Include topic name in header (product cluster only)
-    campaigns: list[Campaign] = field(default_factory=list)

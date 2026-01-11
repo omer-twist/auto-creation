@@ -3,7 +3,7 @@
 from .. import register
 from ..base import Generator
 from ...models.context import GenerationContext
-from src.clients.llm import LLMClient
+from ...clients.llm import LLMClient
 
 
 @register("text.header")

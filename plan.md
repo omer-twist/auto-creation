@@ -600,7 +600,7 @@ When v2 is complete and tested, we switch over and delete old code.
 | 5. Engine ✅ | Wire everything together | `src/v2/engine/engine.py` |
 | 6. Integration ✅ | v2 API endpoints | `src/handlers/worker.py` (v2 routes) |
 | 7. Frontend & Style Pool ✅ | Config-driven UI + style_pool | `frontend/`, `src/v2/engine/engine.py` |
-| 8. Cleanup | Remove old code | Delete `src/services/`, old models |
+| 8. Cleanup ✅ | Remove old code, promote v2 | Delete v1, move v2 to main |
 
 ---
 
@@ -1231,9 +1231,136 @@ Full flow tested and working:
 
 ---
 
+## Phase 8: V1 Deletion + V2 Promotion ✅
+
+### Goal
+
+Full removal of v1 architecture. V2 code promoted to main `src/` (no more "v2" naming).
+
+### What Was Deleted
+
+| Folder/File | Lines | Purpose |
+|-------------|-------|---------|
+| `src/services/` | ~785 | V1 orchestration (TopicService, TextService, etc.) |
+| `src/models/` (old) | ~165 | V1 models (Topic with all fields, styles.py) |
+| `src/prompts/` (old) | ~408 | V1 3-stage LLM prompts |
+| `src/clients/creative.py` methods | ~57 | V1-only methods (submit_job, submit_product_cluster_job) |
+| **Total** | **~1415** | |
+
+### What Was Moved
+
+| From | To |
+|------|-----|
+| `src/v2/models/` | `src/models/` |
+| `src/v2/generators/` | `src/generators/` |
+| `src/v2/engine/` | `src/engine/` |
+| `src/v2/prompts/` | `src/prompts/` |
+| `src/v2/config/types/` | `src/creative_types/` |
+| `src/v2/api/serializers.py` | `src/serializers.py` (single file) |
+
+### Renames
+
+| Old | New |
+|-----|-----|
+| `_handle_v2()` | `_handle_creative()` |
+| `_upload_v2_creatives()` | `_upload_creatives()` |
+| `TopicV2` import alias | `Topic` |
+| `product_cluster_v2` registry key | `product_cluster` |
+| `"""V2 Models."""` docstring | `"""Models."""` |
+
+### Final File Structure
+
+```
+src/
+├── models/                # Promoted from v2/models/
+│   ├── __init__.py
+│   ├── topic.py
+│   ├── creative.py
+│   ├── campaign.py
+│   ├── config.py          # CreativeTypeConfig, Field, Condition
+│   ├── context.py
+│   └── slot.py
+│
+├── generators/            # Promoted from v2/generators/
+│   ├── __init__.py
+│   ├── base.py
+│   ├── text/
+│   │   ├── __init__.py
+│   │   ├── header.py
+│   │   └── main_text.py
+│   └── image/
+│       ├── __init__.py
+│       ├── base.py
+│       └── cluster.py
+│
+├── engine/                # Promoted from v2/engine/
+│   ├── __init__.py
+│   └── engine.py
+│
+├── creative_types/        # Promoted from v2/config/types/
+│   ├── __init__.py
+│   └── product_cluster.py
+│
+├── prompts/               # Promoted from v2/prompts/
+│   └── main_text.txt
+│
+├── clients/               # Unchanged (shared)
+│   ├── __init__.py
+│   ├── creative.py        # Removed v1 methods
+│   ├── gemini.py
+│   ├── removebg.py
+│   ├── llm.py
+│   └── monday.py
+│
+├── handlers/              # Simplified
+│   ├── worker.py          # No more v2 naming
+│   └── enqueue.py
+│
+├── serializers.py         # Single file (was v2/api/serializers.py)
+├── config.py              # Unchanged (env vars)
+└── utils.py               # Unchanged
+```
+
+### Import Updates
+
+All imports updated throughout the codebase:
+
+```python
+# Before (v2 paths)
+from ..v2.engine import CreativeEngine
+from ..v2.config.types import get_creative_type
+from ..v2.models import Topic as TopicV2
+from src.serializers import serialize_all
+
+# After (main paths)
+from ..engine import CreativeEngine
+from ..creative_types import get_creative_type
+from ..models import Topic
+from src.serializers import serialize_all
+```
+
+### Verification
+
+All imports verified working:
+```bash
+python -c "from src.handlers.worker import handler; print('OK')"
+python -c "from src.engine import CreativeEngine; print('OK')"
+python -c "from src.models import Topic, Creative; print('OK')"
+python -c "from src.generators import get_generator_class; print('OK')"
+python -c "from src.creative_types import get_creative_type; print('OK')"
+python -c "from src.serializers import serialize_all; print('OK')"
+```
+
+Full generation test passed:
+- 12 creatives generated
+- 4 campaigns created on Monday.com
+- 3 images uploaded per campaign
+
+---
+
 ## Local Development Setup
 
-Before Phase 8, set up local development to reduce reliance on production Lambda for testing.
+Set up local development to reduce reliance on production Lambda for testing.
 
 ### Option 1: Simple Flask Dev Server (Recommended)
 
@@ -1245,7 +1372,7 @@ Minimal setup - serves frontend and calls handlers directly without SQS.
 """Local dev server - serves frontend and calls handlers directly."""
 
 from flask import Flask, request, jsonify, send_from_directory
-from src.v2.api.serializers import serialize_all
+from src.serializers import serialize_all
 from src.handlers.worker import handler as worker_handler
 
 app = Flask(__name__)
@@ -1361,28 +1488,24 @@ Start with **Option 1 (Flask)** for daily development:
 
 ## Current Status
 
-**Phases 1-7 Complete:**
-- Models: Topic, Creative, Slot, CreativeTypeConfig, Field, Condition
-- Generators: text.header, text.main_text, image.cluster (with INPUTS declarations)
-- Config: product_cluster_v2 with variants/variant_sequence/style_pool
-- Engine: CreativeEngine with full pipeline + style_pool support
-- Integration: worker.py routes `product_cluster_v2` to v2 engine
+**Phases 1-8 Complete:**
+- Models: Topic, Creative, Slot, CreativeTypeConfig, Field, Condition (in `src/models/`)
+- Generators: text.header, text.main_text, image.cluster (in `src/generators/`)
+- Config: product_cluster with variants/variant_sequence/style_pool (in `src/creative_types/`)
+- Engine: CreativeEngine with full pipeline + style_pool support (in `src/engine/`)
+- Integration: worker.py routes to config-driven engine
 - API: `/config` endpoint serves field definitions
 - Frontend: Generic field renderer, dynamic forms
 - Infrastructure: Both lambdas on Docker, increased memory/timeout
 - Style support: `style.*` sources resolve from `config.style_pool`
+- **V1 code fully deleted, v2 promoted to main src/ (no more "v2" naming)**
 
-**v2 product_cluster is fully working and matches v1 output.**
+**product_cluster is the only creative type, running on the new config-driven architecture.**
 
-**Next - Phase 8 (Cleanup):**
-1. Validate v2 output matches v1 in production
-2. Rename `product_cluster_v2` → `product_cluster` (replace v1)
-3. Delete v1 code:
-   - `src/services/topic.py` (generate_product_cluster method)
-   - `src/services/creative.py` (product_cluster methods)
-   - `src/services/text.py` (generate_for_product_cluster method)
-   - `src/models/styles.py` (PRODUCT_CLUSTER_STYLES - now in v2 config)
-4. Audit and delete unused abstractions (Condition, GeneratorOption)
+**Next - Phase 9 (Production Deployment):**
+1. Deploy frontend to S3
+2. Set up CloudFront with Lambda@Edge auth
+3. Route API calls through CloudFront
 
 ---
 

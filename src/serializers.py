@@ -1,8 +1,8 @@
 """Serializers for creative type configs."""
 
-from ..config.types import CREATIVE_TYPES
-from ..models.config import CreativeTypeConfig, Field
-from ..generators import get_generator_class
+from .creative_types import CREATIVE_TYPES
+from .models.config import CreativeTypeConfig, Field
+from .generators import get_generator_class
 
 
 def serialize_all() -> dict:
@@ -73,7 +73,7 @@ def sort_fields(fields: list[Field]) -> list[Field]:
             return 3
         if field.type == 'textarea' and not has_condition:
             return 4
-        # Block conditionals (toggle → section)
+        # Block conditionals (toggle -> section)
         if field.type == 'list' and cond_type == 'toggle':
             return 5
         if field.type == 'textarea' and cond_type == 'toggle':

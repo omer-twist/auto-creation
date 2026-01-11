@@ -6,9 +6,9 @@ from .. import register
 from .base import ImageGenerator
 from ...models.context import GenerationContext
 from ...models.config import Field
-from ....clients.gemini import GeminiClient
-from ....clients.removebg import RemoveBgClient
-from ....clients.creative import CreativeClient
+from ...clients.gemini import GeminiClient
+from ...clients.removebg import RemoveBgClient
+from ...clients.creative import CreativeClient
 
 
 @register("image.cluster")
