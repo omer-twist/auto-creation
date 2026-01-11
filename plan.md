@@ -599,7 +599,7 @@ When v2 is complete and tested, we switch over and delete old code.
 | 4. Config ✅ | Create product_cluster config | `src/v2/config/types/product_cluster.py` |
 | 5. Engine ✅ | Wire everything together | `src/v2/engine/engine.py` |
 | 6. Integration ✅ | v2 API endpoints | `src/handlers/worker.py` (v2 routes) |
-| 7. Frontend | Config-driven UI | `frontend/` |
+| 7. Frontend & Style Pool ✅ | Config-driven UI + style_pool | `frontend/`, `src/v2/engine/engine.py` |
 | 8. Cleanup | Remove old code | Delete `src/services/`, old models |
 
 ---
@@ -1037,7 +1037,7 @@ Both should produce equivalent Monday.com output. Compare results to validate v2
 
 ---
 
-## Phase 7: Frontend ✅ (with known issue)
+## Phase 7: Frontend & Style Pool ✅
 
 ### Goal
 
@@ -1159,29 +1159,64 @@ Removed duplicate CORS header from handler (terraform's Lambda Function URL conf
 # After: Only terraform sets CORS
 ```
 
-### Known Issue: Background Color
+### Background Color Fix (style_pool)
 
-**Bug:** v2 produces creatives with the same background color for all variants.
+**Problem:** v2 creatives all had the same background color because:
+1. v2 wasn't sending `bg.background_color` to Placid (v1 sends it dynamically)
+2. v2 used alternating variant_sequence (`["dark", "light"] * 6`) instead of v1's 6+6 pattern
+
+**Solution:** Added `style_pool` support to the engine.
+
+**Files Modified:**
+
+| File | Changes |
+|------|---------|
+| `src/v2/models/config.py` | Added `style_pool: list[dict[str, Any]] \| None` field to `CreativeTypeConfig` |
+| `src/v2/engine/engine.py` | Added `_resolve_style_source()` method, modified `_resolve_sources()` to handle `style.*` sources |
+| `src/v2/config/types/product_cluster.py` | Added `style_pool` with 12 background colors, added `bg.background_color` slot, changed `variant_sequence` to 6+6 |
+| `src/handlers/worker.py` | Modified `_extract_inputs()` to skip `style.*` sources (they don't have generator classes) |
+
+**Implementation:**
+
+```python
+# CreativeTypeConfig now has style_pool
+style_pool: list[dict[str, Any]] | None = None
+
+# product_cluster config
+style_pool=[
+    # Light backgrounds (for dark text template) - first 6
+    {"background_color": "#FDEDD4"},
+    {"background_color": "#D4D2D6"},
+    ...
+    # Dark backgrounds (for white text template) - last 6
+    {"background_color": "#855E89"},
+    {"background_color": "#559B82"},
+    ...
+],
+variant_sequence=["dark"] * 6 + ["light"] * 6,  # 6+6 pattern (matching v1)
+slots=[
+    ...
+    Slot(name="bg.background_color", source="style.background_color"),  # NEW
+],
+
+# Engine resolves style.* sources from style_pool
+def _resolve_style_source(self, source: str, config) -> list[Any]:
+    field = source.split(".", 1)[1]  # "style.background_color" → "background_color"
+    return [style[field] for style in config.style_pool]
+```
+
+**Result:**
+- Creatives 0-5: dark template + light backgrounds (#FDEDD4, #D4D2D6, #E8AAAC, #B5D7E6, #DBD4FD, #FDD4D4)
+- Creatives 6-11: light template + dark backgrounds (#855E89, #559B82, #A69A87, #597A9A, #827171, #5B6E82)
 
 ### TODO: Audit Unused Abstractions
 
 Check if these are actually needed:
 
 - [ ] `Condition` class - defined in config.py but never instantiated
-- [ ] `GeneratorOption` class - removed or never added?
+- [ ] `GeneratorOption` class - defined in base.py but never used
 
 If not used by the 10 creative types, delete them.
-
-**Expected:** Alternating dark/light variants based on `variant_sequence = ["dark", "light"] * 6`
-
-**Observed:** All creatives have same background color, but other styling varies correctly (fonts, etc.)
-
-**Likely cause:** Either:
-1. `variant_sequence` not being applied correctly in engine
-2. Both Placid template UUIDs (`dark`/`light`) have same background
-3. Something overriding the template's background in layers
-
-**Status:** To be investigated and fixed.
 
 ### Testing
 
@@ -1192,7 +1227,7 @@ Full flow tested and working:
 4. ✅ SQS triggers worker
 5. ✅ Worker processes via v2 engine
 6. ✅ Creatives uploaded to Monday.com
-7. ⚠️ Background color bug (variants not alternating)
+7. ✅ Background colors working (12 unique colors, matching v1)
 
 ---
 
@@ -1326,19 +1361,222 @@ Start with **Option 1 (Flask)** for daily development:
 
 ## Current Status
 
-**Phases 1-7 Complete** (with known issue):
+**Phases 1-7 Complete:**
 - Models: Topic, Creative, Slot, CreativeTypeConfig, Field, Condition
 - Generators: text.header, text.main_text, image.cluster (with INPUTS declarations)
-- Config: product_cluster_v2 with variants/variant_sequence
-- Engine: CreativeEngine with full pipeline
+- Config: product_cluster_v2 with variants/variant_sequence/style_pool
+- Engine: CreativeEngine with full pipeline + style_pool support
 - Integration: worker.py routes `product_cluster_v2` to v2 engine
 - API: `/config` endpoint serves field definitions
 - Frontend: Generic field renderer, dynamic forms
 - Infrastructure: Both lambdas on Docker, increased memory/timeout
+- Style support: `style.*` sources resolve from `config.style_pool`
 
-**Known Bug:**
-- v2 creatives all have same background color (variant alternation not working)
+**v2 product_cluster is fully working and matches v1 output.**
 
-**Next**:
-- Fix background color bug (variant_sequence or template issue)
-- Phase 8 (Cleanup) - once v2 validated, rename `product_cluster_v2` → `product_cluster`, delete v1 code
+**Next - Phase 8 (Cleanup):**
+1. Validate v2 output matches v1 in production
+2. Rename `product_cluster_v2` → `product_cluster` (replace v1)
+3. Delete v1 code:
+   - `src/services/topic.py` (generate_product_cluster method)
+   - `src/services/creative.py` (product_cluster methods)
+   - `src/services/text.py` (generate_for_product_cluster method)
+   - `src/models/styles.py` (PRODUCT_CLUSTER_STYLES - now in v2 config)
+4. Audit and delete unused abstractions (Condition, GeneratorOption)
+
+---
+
+## Phase 9: Production Deployment (S3 + CloudFront + Auth)
+
+### Goal
+
+Deploy frontend to S3, serve via CloudFront, add Basic Auth at edge layer.
+
+### Architecture
+
+```
+User → CloudFront (Lambda@Edge auth) → S3 (frontend static files)
+                                     → Lambda Function URL (API)
+```
+
+### Components
+
+1. **S3 Bucket** - hosts frontend static files (index.html, app.js, styles.css)
+2. **CloudFront Distribution** - CDN with two origins:
+   - Default: S3 bucket (frontend)
+   - `/api/*`: Lambda Function URL (backend)
+3. **Lambda@Edge** - Basic Auth on viewer-request
+4. **Route53** (optional) - custom domain
+
+### Files to Create
+
+#### 1. `edge_auth.py` - Lambda@Edge function
+
+```python
+import base64
+
+CREDENTIALS = "admin:your-password"  # Move to parameter store later
+
+def handler(event, context):
+    request = event["Records"][0]["cf"]["request"]
+    headers = request.get("headers", {})
+
+    auth = headers.get("authorization", [{}])[0].get("value", "")
+
+    if auth.startswith("Basic "):
+        decoded = base64.b64decode(auth[6:]).decode()
+        if decoded == CREDENTIALS:
+            return request  # Allow through
+
+    return {
+        "status": "401",
+        "headers": {
+            "www-authenticate": [{"value": 'Basic realm="Login"'}]
+        },
+        "body": "Login required"
+    }
+```
+
+#### 2. Terraform resources
+
+```hcl
+# S3 bucket for frontend
+resource "aws_s3_bucket" "frontend" {
+  bucket = "campaigns-frontend-${var.environment}"
+}
+
+resource "aws_s3_bucket_policy" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "cloudfront.amazonaws.com" }
+      Action    = "s3:GetObject"
+      Resource  = "${aws_s3_bucket.frontend.arn}/*"
+      Condition = {
+        StringEquals = {
+          "AWS:SourceArn" = aws_cloudfront_distribution.main.arn
+        }
+      }
+    }]
+  })
+}
+
+# Lambda@Edge for auth (must be in us-east-1)
+resource "aws_lambda_function" "edge_auth" {
+  provider      = aws.us_east_1
+  function_name = "campaigns-edge-auth"
+  role          = aws_iam_role.edge_auth.arn
+  handler       = "edge_auth.handler"
+  runtime       = "python3.11"
+  publish       = true  # Required for Lambda@Edge
+
+  filename         = data.archive_file.edge_auth.output_path
+  source_code_hash = data.archive_file.edge_auth.output_base64sha256
+}
+
+# CloudFront distribution
+resource "aws_cloudfront_distribution" "main" {
+  enabled             = true
+  default_root_object = "index.html"
+
+  # Frontend origin (S3)
+  origin {
+    domain_name              = aws_s3_bucket.frontend.bucket_regional_domain_name
+    origin_id                = "s3"
+    origin_access_control_id = aws_cloudfront_origin_access_control.main.id
+  }
+
+  # API origin (Lambda Function URL)
+  origin {
+    domain_name = replace(aws_lambda_function_url.enqueue.function_url, "https://", "")
+    origin_id   = "api"
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  # Default behavior (S3 frontend)
+  default_cache_behavior {
+    target_origin_id       = "s3"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+
+    lambda_function_association {
+      event_type   = "viewer-request"
+      lambda_arn   = aws_lambda_function.edge_auth.qualified_arn
+      include_body = false
+    }
+
+    forwarding_values {
+      query_string = false
+      cookies { forward = "none" }
+    }
+  }
+
+  # API behavior
+  ordered_cache_behavior {
+    path_pattern           = "/api/*"
+    target_origin_id       = "api"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+    cached_methods         = ["GET", "HEAD"]
+
+    lambda_function_association {
+      event_type   = "viewer-request"
+      lambda_arn   = aws_lambda_function.edge_auth.qualified_arn
+      include_body = true
+    }
+
+    forwarding_values {
+      query_string = true
+      headers      = ["Authorization", "Content-Type"]
+      cookies { forward = "none" }
+    }
+
+    min_ttl     = 0
+    default_ttl = 0
+    max_ttl     = 0
+  }
+
+  restrictions {
+    geo_restriction { restriction_type = "none" }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+}
+```
+
+### Frontend Changes
+
+Update API calls to use `/api/` prefix:
+
+```javascript
+// Before
+fetch('/config')
+fetch('/', { method: 'POST', ... })
+
+// After
+fetch('/api/config')
+fetch('/api/', { method: 'POST', ... })
+```
+
+### Deployment Steps
+
+1. Create S3 bucket and CloudFront via terraform
+2. Upload frontend files to S3: `aws s3 sync frontend/ s3://bucket-name/`
+3. Update frontend to use `/api/` prefix
+4. Test via CloudFront URL
+
+### Security Notes
+
+- Lambda@Edge credentials hardcoded initially - move to SSM Parameter Store later
+- S3 bucket is private, only accessible via CloudFront OAC
+- All traffic forced to HTTPS
