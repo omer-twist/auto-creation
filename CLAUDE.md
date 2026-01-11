@@ -9,9 +9,9 @@ Marketing creative generation system for affiliate campaigns. Takes a topic (e.g
 ## Commands
 
 ```bash
-# Run locally
-python -m src.handlers.worker "<topic>" "<event>" "<discount>" "<page_type>"
-python -m src.handlers.worker "Girls Bracelet Making Kit" "Black Friday" "up to 50%" category
+# Run locally (product_cluster is the default creative type)
+python -m src.handlers.worker "<topic>" "<event>" "<discount>" "<page_type>" [creative_type] [inputs_json]
+python -m src.handlers.worker "Girls Bracelet Kit" "Black Friday" "50%" category product_cluster '{"product_image_urls": ["url1", "url2", "url3"]}'
 
 # Deploy
 docker build --provenance=false --platform linux/amd64 -t ai-tools .
@@ -24,43 +24,89 @@ cd terraform && terraform apply
 
 ## Architecture
 
-### Entity Hierarchy
+### Config-Driven Engine
 
-- **Topic** → 4 Campaigns → 3 Creatives each (12 total)
-- **Campaign** = batch that becomes one Monday.com row
-- **Creative** = atomic unit: text + image_url + styling
-
-### Service Design Pattern
-
-**Every entity service can be both a pipeline step AND an orchestrator. Leaf providers (TextService, styles) enable any service to become an orchestrator.**
+The system uses a config-driven architecture where creative types are defined declaratively:
 
 ```
-TopicService.generate(topic)           # orchestrator
-    ├── TextService.generate_for_topic()   # leaf (LLM, 3-stage pipeline)
-    ├── get_styles_for_count()             # leaf (style pool)
-    ├── CreativeService.generate_batch()   # step (Placid images)
-    └── _group_into_campaigns()
+CreativeTypeConfig (src/creative_types/)
+    ├── variants: {"dark": UUID, "light": UUID}     # Placid template UUIDs
+    ├── variant_sequence: ["dark"] * 6 + ["light"] * 6
+    ├── style_pool: [{background_color: "#FFF"}, ...]
+    └── slots: [
+            Slot(name="header.text", source="text.header"),
+            Slot(name="main_text.text", source="text.main_text"),
+            Slot(name="image.image", source="image.cluster"),
+            Slot(name="bg.background_color", source="style.background_color"),
+        ]
 ```
 
-Leaves:
-- **TextService** - generates texts via LLM prompts
-- **styles.py** - provides styles from predefined pool (`get_styles_for_count()`)
+### Data Flow
 
-No service is inherently "top-level" - it depends on what's calling it. Future services (CampaignService, BatchService) can make current orchestrators into steps.
+```
+Worker Handler
+    │
+    ├── Topic (universal: name, event, discount, page_type, url)
+    ├── inputs (type-specific: product_image_urls, include_header)
+    └── options (runtime settings)
+    │
+    ▼
+CreativeEngine.generate(topic, config, inputs, options, count=12)
+    │
+    ├── _resolve_sources() → runs each generator once, caches results
+    │       text.header    → ["TOPIC NAME"] (broadcasts to all 12)
+    │       text.main_text → ["line1", "line2", ...] (12 variations)
+    │       image.cluster  → ["https://..."] (1 image, broadcasts)
+    │       style.*        → values from config.style_pool
+    │
+    └── _build_creatives() → for each of 12 creatives:
+            1. Select variant (dark/light) from variant_sequence
+            2. Build layers dict using modulo indexing
+            3. Submit to Placid via submit_generic_job()
+            4. Poll for result → Creative(creative_url)
+    │
+    ▼
+Upload to Monday.com (4 rows × 3 images each)
+```
 
-### Text Generation Pipeline
+### Generators
 
-TextService runs 3 LLM stages, each with its own prompt in `src/prompts/`:
-1. `creator.txt` - generates initial 12 variations
-2. `editor.txt` - refines the variations
-3. `final_toucher.txt` - final polish
+Generators are independent modules registered via decorator:
 
-Each stage outputs TSV format (index + text), parsed and passed to the next stage.
+```python
+@register("text.header")
+class HeaderGenerator(Generator):
+    def generate(self, context: GenerationContext) -> list[str]:
+        return [context.topic.name.upper()] * context.count
+
+@register("image.cluster")
+class ClusterImageGenerator(ImageGenerator):
+    INPUTS = [Field(name="product_image_urls", type="list", required=True)]
+    def _generate_raw(self, context) -> bytes:
+        # Download products → Gemini cluster → bytes
+```
+
+Generators declare `INPUTS` (user-provided fields) which the frontend serializer collects automatically.
+
+### Adding a New Creative Type
+
+1. Create config in `src/creative_types/new_type.py`
+2. Register in `src/creative_types/__init__.py`
+3. Create generators if needed (or reuse existing ones)
+
+No handler changes required - the engine routes based on config.
+
+### Key Concepts
+
+- **Slot**: Maps a Placid layer (e.g., `header.text`) to a source (`text.header` or `style.background_color`)
+- **Modulo indexing**: `results[i % len(results)]` - 1 result broadcasts to all, 12 results map 1:1
+- **style_pool**: Pre-defined values for `style.*` sources (colors, fonts)
+- **variant_sequence**: Which Placid template to use for each creative index
 
 ### Infrastructure
 
-Two Lambdas:
-- **enqueue** - HTTP endpoint, queues to SQS
-- **worker** - Docker image, processes SQS messages, generates creatives
+Two Lambdas (both use same Docker image):
+- **enqueue** - HTTP endpoint: GET /config (returns field definitions), POST / (queues to SQS)
+- **worker** - Processes SQS messages, generates creatives
 
-External services: OpenAI (text), Placid (images), Monday.com (output)
+External services: OpenAI (text), Gemini (images), remove.bg (background removal), Placid (rendering), Monday.com (output)
