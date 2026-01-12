@@ -2,7 +2,7 @@
 
 from .creative_types import CREATIVE_TYPES
 from .models.config import CreativeTypeConfig, Field
-from .generators import get_generator_class
+from .generators.inputs import get_generator_inputs
 
 
 def serialize_all() -> dict:
@@ -28,17 +28,12 @@ def collect_fields_for_type(config: CreativeTypeConfig) -> list[Field]:
     seen = set()
     fields = []
 
-    # Collect INPUTS from generators
+    # Collect INPUTS from generators (using lightweight registry)
     for slot in config.slots:
-        try:
-            generator_cls = get_generator_class(slot.source)
-            for field in getattr(generator_cls, 'INPUTS', []):
-                if field.name not in seen:
-                    seen.add(field.name)
-                    fields.append(field)
-        except ValueError:
-            # Generator not found, skip
-            pass
+        for field in get_generator_inputs(slot.source):
+            if field.name not in seen:
+                seen.add(field.name)
+                fields.append(field)
 
     # Create toggle fields for optional slots
     for slot in config.slots:

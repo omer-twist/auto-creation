@@ -5,7 +5,6 @@ import requests
 from .. import register
 from .base import ImageGenerator
 from ...models.context import GenerationContext
-from ...models.config import Field
 from ...clients.gemini import GeminiClient
 from ...clients.removebg import RemoveBgClient
 from ...clients.creative import CreativeClient
@@ -15,20 +14,7 @@ from ...clients.creative import CreativeClient
 class ClusterImageGenerator(ImageGenerator):
     """Generates product cluster images from product URLs."""
 
-    INPUTS = [
-        Field(
-            name="product_image_urls",
-            type="list",
-            label="Product Image URLs",
-            required=True,
-        ),
-        Field(
-            name="is_people_mode",
-            type="toggle",
-            label="People Mode",
-            default=False,
-        ),
-    ]
+    # INPUTS defined in src/generators/inputs.py (kept separate to avoid heavy imports in serializers)
 
     def __init__(
         self,

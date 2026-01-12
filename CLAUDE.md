@@ -13,10 +13,8 @@ Marketing creative generation system for affiliate campaigns. Takes a topic (e.g
 python -m src.handlers.worker "<topic>" "<event>" "<discount>" "<page_type>" [creative_type] [inputs_json]
 python -m src.handlers.worker "Girls Bracelet Kit" "Black Friday" "50%" category product_cluster '{"product_image_urls": ["url1", "url2", "url3"]}'
 
-# Deploy
-docker build --provenance=false --platform linux/amd64 -t ai-tools .
-docker tag ai-tools:latest <account>.dkr.ecr.us-east-1.amazonaws.com/campaigns-generator:latest
-docker push <account>.dkr.ecr.us-east-1.amazonaws.com/campaigns-generator:latest
+# Deploy (builds, pushes to ECR, updates both lambdas)
+./deploy.sh
 
 # Infrastructure
 cd terraform && terraform apply
@@ -81,18 +79,18 @@ class HeaderGenerator(Generator):
 
 @register("image.cluster")
 class ClusterImageGenerator(ImageGenerator):
-    INPUTS = [Field(name="product_image_urls", type="list", required=True)]
     def _generate_raw(self, context) -> bytes:
         # Download products → Gemini cluster → bytes
 ```
 
-Generators declare `INPUTS` (user-provided fields) which the frontend serializer collects automatically.
+Generator inputs are declared in `src/generators/inputs.py` (kept separate to avoid heavy imports in enqueue Lambda).
 
 ### Adding a New Creative Type
 
 1. Create config in `src/creative_types/new_type.py`
 2. Register in `src/creative_types/__init__.py`
-3. Create generators if needed (or reuse existing ones)
+3. Add generator inputs to `src/generators/inputs.py`
+4. Create generators if needed (or reuse existing ones)
 
 No handler changes required - the engine routes based on config.
 
@@ -108,5 +106,7 @@ No handler changes required - the engine routes based on config.
 Two Lambdas (both use same Docker image):
 - **enqueue** - HTTP endpoint: GET /config (returns field definitions), POST / (queues to SQS)
 - **worker** - Processes SQS messages, generates creatives
+
+Frontend hosted on Cloudflare Pages (`creatives-dealogic.pages.dev`), protected by Cloudflare Access.
 
 External services: OpenAI (text), Gemini (images), remove.bg (background removal), Placid (rendering), Monday.com (output)

@@ -5,7 +5,6 @@ from pathlib import Path
 from ..base import Generator
 from .. import register
 from ...models.context import GenerationContext
-from ...models.config import Field
 from ...clients.llm import LLMClient
 
 
@@ -13,14 +12,7 @@ from ...clients.llm import LLMClient
 class MainTextGenerator(Generator):
     """Generates main text lines for creatives."""
 
-    INPUTS = [
-        Field(
-            name="main_lines",
-            type="textarea",
-            label="Main Text Lines",
-            required=False,
-        ),
-    ]
+    # INPUTS defined in src/generators/inputs.py (kept separate to avoid heavy imports in serializers)
 
     def __init__(self, llm: LLMClient | None = None):
         self.llm = llm
