@@ -1,133 +1,232 @@
-# Architecture Change: 1:1 Slot-to-Generator with Opt-in Batching
+# Plan: Simplified Slot-Based Generation Model
 
-## Problem with Current Design
+## Summary
 
-Current design defaults to batching: generator runs once per source, returns list, smart indexing distributes results. This leads to:
+Replace smart indexing with a simple, explicit model:
+- **Default**: 1 value per slot, broadcast to all creatives
+- **`batch_creatives=True`**: N values per slot, one per creative
 
-1. **Confusing mental model** - `(creative_idx * num_slots + slot_idx) % len(results)` is hard to reason about
-2. **Input mapping is implicit** - no clear connection between `product_image_urls[3]` and which slot gets it
-3. **Config sharing issues** - all slots with same source must share `generator_config`
+Generator contract stays the same: `generate(context) -> list[Any]`. Engine controls `context.count` based on config.
 
-Batching should be the **exception** (where it saves API calls), not the default.
+## Model
 
-## Proposed Design
+| Slot Config | Engine passes | Generator returns | Distribution |
+|-------------|---------------|-------------------|--------------|
+| default | `count=1` | `[value]` | `results[0]` → all creatives |
+| `batch_creatives=True` | `count=12` | `[v0, ..., v11]` | `results[i]` → creative `i` |
 
-### Default: 1:1 (One Generator Call Per Slot)
+No smart indexing. Just broadcast or direct index.
 
+## Examples
+
+### product_cluster
 ```python
-# Engine assigns slot_index to each slot with same source
-# Slot declaration order = index order
+slots=[
+    Slot(name="header.text", source="text.header"),
+    # → count=1, returns ["TOPIC"], all creatives get "TOPIC"
 
-class ProductImageGenerator(Generator):
-    def generate(self, context: GenerationContext) -> str:  # returns ONE result
-        url = context.inputs["product_image_urls"][context.slot_index]
-        return self.process_image(url, context.generator_config)
+    Slot(name="main_text.text", source="text.main_text", batch_creatives=True),
+    # → count=12, returns ["t0", ..., "t11"], creative[i] gets t[i]
+
+    Slot(name="image.image", source="image.cluster"),
+    # → count=1, returns ["url"], all creatives get "url"
+
+    Slot(name="bg.background_color", source="style.background_color", batch_creatives=True),
+    # → count=12, returns 12 colors from style_pool
+]
 ```
 
-- Each slot triggers one generator call
-- Generator receives `context.slot_index` (0, 1, 2... for slots sharing same source)
-- Generator returns **single value**, not list
-- Input array index = slot index (positional mapping)
-
-### Opt-in: Batched Generators
-
+### product_grid
 ```python
-@register("text.main_text", batched=True)
-class MainTextGenerator(Generator):
-    def generate(self, context: GenerationContext) -> list[str]:  # returns N results
-        return openai_generate_variations(context.topic, count=context.count)
+slots=[
+    Slot(name="header.text", source="text.header"),
+    Slot(name="main_text.text", source="text.main_text", batch_creatives=True),
+
+    # 8 image slots - each gets count=1, uses slot_index for input
+    Slot(name="image1.image", source="image.product"),  # slot_index=0 → urls[0]
+    Slot(name="image2.image", source="image.product"),  # slot_index=1 → urls[1]
+    Slot(name="image3.image", source="image.product"),  # slot_index=2 → urls[2]
+    Slot(name="image4.image", source="image.product"),  # slot_index=3 → urls[3]
+    Slot(name="image5.image", source="image.product"),  # slot_index=4 → urls[4]
+    Slot(name="image6.image", source="image.product"),  # slot_index=5 → urls[5]
+    Slot(name="image7.image", source="image.product"),  # slot_index=6 → urls[6]
+    Slot(name="image8.image", source="image.product"),  # slot_index=7 → urls[7]
+    # → 8 calls, each count=1, each returns [url], broadcast to all creatives
+
+    Slot(name="bg.background_color", source="style.background_color", batch_creatives=True),
+]
 ```
-
-- Explicitly declared with `batched=True`
-- Called once for all slots with that source
-- Returns list, engine distributes to slots (existing smart indexing)
-- Use when batching saves API calls (e.g., one OpenAI call for 12 text variations)
-
-## Benefits
-
-| Aspect | Current (batch default) | Proposed (1:1 default) |
-|--------|------------------------|------------------------|
-| Mental model | Complex smart indexing | Slot N gets input N |
-| Input mapping | Implicit, distributed | Explicit, positional |
-| Per-slot config | Broken (all share) | Works naturally |
-| API efficiency | Always batched | Batch only when helpful |
 
 ## Implementation
 
-### GenerationContext Changes
+### 1. Update Slot Model
+
+**File: `src/models/config.py`**
+
+```python
+@dataclass
+class Slot:
+    name: str
+    source: str
+    optional: bool = False
+    generator_config: dict | None = None
+    batch_creatives: bool = False       # NEW
+```
+
+### 2. Update GenerationContext
+
+**File: `src/models/context.py`**
 
 ```python
 @dataclass
 class GenerationContext:
     topic: Topic
-    inputs: dict
-    count: int  # total creatives (12)
-    slot_index: int | None  # NEW - None for batched generators
-    generator_config: dict  # slot-specific config
+    inputs: dict[str, Any]
+    options: dict[str, Any]
+    count: int                          # how many values to generate
+    slot_index: int | None = None       # NEW: index among slots with same source
 ```
 
-### Engine Changes
+### 3. Update Engine._resolve_sources
+
+**File: `src/engine/engine.py`**
 
 ```python
-def _resolve_sources(self, slots, context):
+def _resolve_sources(self, topic, config, inputs, options, creative_count):
     results = {}
 
-    for source in unique_sources(slots):
-        generator = get_generator(source)
+    # Group slots by source
+    slots_by_source = defaultdict(list)
+    for slot in config.slots:
+        slots_by_source[slot.source].append(slot)
 
-        if generator.batched:
-            # Call once, get list
-            ctx = context.with_slot_index(None)
-            results[source] = generator.generate(ctx)
+    for source, slots in slots_by_source.items():
+        if source.startswith("style."):
+            results[source] = self._resolve_style_source(source, config)
+            continue
+
+        generator = self._create_generator(source)
+        batch_creatives = any(s.batch_creatives for s in slots)
+
+        if batch_creatives:
+            # 1 call, count=creative_count
+            context = GenerationContext(
+                topic=topic,
+                inputs=inputs,
+                options=options,
+                count=creative_count,
+                slot_index=None,
+            )
+            results[source] = generator.generate(context)
         else:
-            # Call per slot
+            # 1 call per slot, count=1
             results[source] = []
-            for idx, slot in enumerate(slots_for_source(source)):
-                ctx = context.with_slot_index(idx).with_config(slot.generator_config)
-                results[source].append(generator.generate(ctx))
+            for slot_idx, slot in enumerate(slots):
+                merged_inputs = {**inputs}
+                if slot.generator_config:
+                    merged_inputs.update(slot.generator_config)
+
+                context = GenerationContext(
+                    topic=topic,
+                    inputs=merged_inputs,
+                    options=options,
+                    count=1,
+                    slot_index=slot_idx,
+                )
+                value_list = generator.generate(context)  # returns [value]
+                results[source].append(value_list[0])
 
     return results
 ```
 
-### Generator Registration
+### 4. Update Engine._build_layers
+
+**File: `src/engine/engine.py`**
 
 ```python
-def register(source: str, batched: bool = False):
-    def decorator(cls):
-        REGISTRY[source] = GeneratorEntry(cls, batched=batched)
-        return cls
-    return decorator
+def _build_layers(self, config, source_results, inputs, creative_idx, slot_indices):
+    layers = {}
+
+    for slot in config.slots:
+        if slot.optional:
+            toggle_name = f"include_{slot.name.split('.')[0]}"
+            if not inputs.get(toggle_name, True):
+                continue
+
+        results = source_results[slot.source]
+
+        if slot.batch_creatives or slot.source.startswith("style."):
+            # Indexed by creative
+            value = results[creative_idx]
+        else:
+            # Indexed by slot (same for all creatives)
+            slot_idx = slot_indices[slot.source]["slots"][slot.name]
+            value = results[slot_idx]
+
+        layer_name, prop_name = slot.name.split(".")
+        if layer_name not in layers:
+            layers[layer_name] = {}
+        layers[layer_name][prop_name] = value
+
+    return layers
 ```
 
-## Migration
+### 5. Generator Changes
 
-### Generators to mark as `batched=True`:
-- `text.main_text` - one OpenAI call for 12 variations
-- `text.header` - could go either way (usually returns 1 value broadcast)
+Generators already return `list[Any]`. No signature change needed.
 
-### Generators that stay 1:1 (default):
-- `image.product` - already 1 API call per image
-- `image.cluster` - 1 image total (only 1 slot uses it)
+**text.header** - returns `[value]` (count=1):
+```python
+def generate(self, context) -> list[str]:
+    header = context.topic.name.upper()
+    return [header] * context.count  # works for count=1 or more
+```
 
-### Backward Compatibility
+**text.main_text** - returns `[v0, ..., v11]` (count=12):
+```python
+def generate(self, context) -> list[str]:
+    return self._generate_via_llm(context)  # returns count values
+```
 
-Existing generators return lists. Options:
-1. **Require migration** - update all generators to new signature
-2. **Auto-detect** - if returns list and not batched, treat as batched (deprecation warning)
+**image.product** - returns `[url]` (count=1), uses slot_index:
+```python
+def generate(self, context) -> list[str]:
+    url = context.inputs["product_image_urls"][context.slot_index]
+    processed = self._process(url)
+    return [processed]
+```
 
-Recommend option 1 - clean break, small codebase.
+## Files to Modify
 
-## Open Questions
+1. `src/models/config.py` - Add `batch_creatives` to Slot
+2. `src/models/context.py` - Add `slot_index`
+3. `src/engine/engine.py` - Rewrite `_resolve_sources` and `_build_layers`
+4. `src/generators/text/header.py` - Use `context.count`
+5. `src/generators/image/product.py` - Use `context.slot_index`
+6. `src/creative_types/product_cluster.py` - Add `batch_creatives=True` where needed
+7. `src/creative_types/product_grid.py` - Add `batch_creatives=True` where needed
 
-1. **Slot ordering** - use declaration order in config? Alphabetical by slot name? Explicit `slot_order` field?
+## Future: group_id
 
-2. **Broadcasts** - for `text.header` that returns same value for all creatives, is it:
-   - `batched=True`, returns `["HEADER"] * 12`
-   - `batched=False`, each call returns `"HEADER"` (12 identical calls, wasteful?)
-   - New mode: `broadcast=True`, called once, result copied to all?
+For mixed aspect ratios (16:9 + 1:1 in same creative):
 
-3. **Mixed slot counts across creatives** - currently all creatives have same slots. Keep this assumption?
+```python
+Slot(name="hero.image", source="image.product", group_id="hero",
+     generator_config={"aspect_ratio": "16:9"})
+Slot(name="thumb1.image", source="image.product", group_id="thumbs",
+     generator_config={"aspect_ratio": "1:1"})
+Slot(name="thumb2.image", source="image.product", group_id="thumbs",
+     generator_config={"aspect_ratio": "1:1"})
+```
 
-## Status
+Engine groups by `(source, group_id)` instead of just `source`. Slots with different `group_id` get separate generator calls even if same source.
 
-**IDEA** - written for tomorrow's experimentation.
+Not implementing now.
+
+## Summary
+
+- Generator contract unchanged: `generate(context) -> list[Any]`
+- Engine controls `count`: 1 for default, N for batch_creatives
+- Distribution is simple: broadcast `results[0]` or index `results[i]`
+- `slot_index` tells generator which input to use (for multi-slot sources)
+- No smart indexing formula
