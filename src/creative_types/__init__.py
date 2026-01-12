@@ -2,9 +2,11 @@
 
 from ..models.config import CreativeTypeConfig
 from .product_cluster import PRODUCT_CLUSTER_CONFIG
+from .product_grid import PRODUCT_GRID_CONFIG
 
 CREATIVE_TYPES: dict[str, CreativeTypeConfig] = {
     "product_cluster": PRODUCT_CLUSTER_CONFIG,
+    "product_grid": PRODUCT_GRID_CONFIG,
 }
 
 

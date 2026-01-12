@@ -27,6 +27,14 @@ GENERATOR_INPUTS: dict[str, list[Field]] = {
             required=False,
         ),
     ],
+    "image.product": [
+        Field(
+            name="product_image_urls",
+            type="list",
+            label="Product Image URLs",
+            required=True,
+        ),
+    ],
 }
 
 

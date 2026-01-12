@@ -24,23 +24,24 @@ class ImageGenerator(Generator):
 
     def generate(self, context: GenerationContext) -> list[str]:
         """Template method: generate raw -> post-process -> upload."""
-        # 1. Generate raw image bytes (subclass implements)
-        image_bytes = self._generate_raw(context)
+        # 1. Generate raw image bytes (subclass implements, returns list)
+        images = self._generate_raw(context)
 
-        # 2. Post-process (shared)
+        # 2. Post-process and upload each image
         remove_bg = context.options.get("remove_bg", True)
         crop = context.options.get("crop", True)
-        processed_bytes = self._post_process(image_bytes, remove_bg, crop)
 
-        # 3. Upload to Placid
-        url = self._upload(processed_bytes)
+        urls = []
+        for i, image_bytes in enumerate(images):
+            processed_bytes = self._post_process(image_bytes, remove_bg, crop)
+            url = self._upload(processed_bytes, f"image_{i}.png")
+            urls.append(url)
 
-        # 4. Return single-element list (engine broadcasts)
-        return [url]
+        return urls
 
     @abstractmethod
-    def _generate_raw(self, context: GenerationContext) -> bytes:
-        """Generate raw image bytes. Subclasses implement this."""
+    def _generate_raw(self, context: GenerationContext) -> list[bytes]:
+        """Generate raw image bytes. Returns list (1 for single, N for multiple)."""
         pass
 
     def _post_process(self, image_bytes: bytes, remove_bg: bool, crop: bool) -> bytes:

@@ -29,7 +29,7 @@ from ..utils import to_slug, today_date
 from ..engine import CreativeEngine
 from ..creative_types import get_creative_type, list_creative_types
 from ..models import Topic
-from ..generators import get_generator_class
+from ..generators.inputs import get_generator_inputs
 
 
 def handler(event, context):
@@ -123,16 +123,18 @@ def _handle_creative(body: dict) -> dict:
 
 
 def _extract_inputs(body: dict, config) -> dict:
-    """Extract all inputs from request body based on generator INPUTS and slot options."""
+    """Extract all inputs from request body based on generator inputs and slot options."""
     inputs = {}
+    seen_sources = set()
 
-    # Collect from generator INPUTS
+    # Collect from generator inputs (using lightweight registry)
     for slot in config.slots:
-        # Skip style sources (they don't have generator classes)
-        if slot.source.startswith("style."):
+        # Skip style sources and already processed sources
+        if slot.source.startswith("style.") or slot.source in seen_sources:
             continue
-        gen_class = get_generator_class(slot.source)
-        for field in getattr(gen_class, "INPUTS", []):
+        seen_sources.add(slot.source)
+
+        for field in get_generator_inputs(slot.source):
             if field.name in body:
                 inputs[field.name] = body[field.name]
             elif field.required:

@@ -25,7 +25,7 @@ class ClusterImageGenerator(ImageGenerator):
         super().__init__(removebg=removebg, creative=creative)
         self.gemini = gemini
 
-    def _generate_raw(self, context: GenerationContext) -> bytes:
+    def _generate_raw(self, context: GenerationContext) -> list[bytes]:
         """Download products -> Gemini cluster generation."""
         # Get inputs
         image_urls = context.inputs.get("product_image_urls", [])
@@ -41,12 +41,13 @@ class ClusterImageGenerator(ImageGenerator):
         # Download images
         product_images = self._download_images(image_urls)
 
-        # Generate cluster via Gemini
-        return self.gemini.generate_product_cluster(
+        # Generate cluster via Gemini (single combined image)
+        image_bytes = self.gemini.generate_product_cluster(
             product_images=product_images,
             aspect_ratio=aspect_ratio,
             is_people_mode=is_people_mode,
         )
+        return [image_bytes]  # Return as list (single image)
 
     def _download_images(self, urls: list[str]) -> list[bytes]:
         """Download images from URLs to bytes."""

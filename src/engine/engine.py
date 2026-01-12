@@ -128,6 +128,9 @@ class CreativeEngine:
         creatives = []
         job_ids = []
 
+        # Pre-compute slot indices for smart distribution
+        slot_indices = self._compute_slot_indices(config)
+
         # Submit all jobs first (parallel processing on Placid side)
         for i in range(count):
             # Get variant for this creative
@@ -137,7 +140,7 @@ class CreativeEngine:
                 variant = list(config.variants.keys())[0]  # first/only
             variant_uuid = config.variants[variant]
 
-            layers = self._build_layers(config, source_results, inputs, i)
+            layers = self._build_layers(config, source_results, inputs, i, slot_indices)
             job_id = self.creative.submit_generic_job(variant_uuid, layers)
             job_ids.append((job_id, layers, variant))
 
@@ -154,12 +157,30 @@ class CreativeEngine:
 
         return creatives
 
+    def _compute_slot_indices(
+        self, config: CreativeTypeConfig
+    ) -> dict[str, dict[str, Any]]:
+        """Compute slot indices for each source (for smart distribution)."""
+        slot_indices: dict[str, dict[str, Any]] = {}
+
+        for slot in config.slots:
+            source = slot.source
+            if source not in slot_indices:
+                slot_indices[source] = {"count": 0, "slots": {}}
+
+            # Assign index to this slot for its source
+            slot_indices[source]["slots"][slot.name] = slot_indices[source]["count"]
+            slot_indices[source]["count"] += 1
+
+        return slot_indices
+
     def _build_layers(
         self,
         config: CreativeTypeConfig,
         source_results: dict[str, list[Any]],
         inputs: dict[str, Any],
         index: int,
+        slot_indices: dict[str, dict[str, Any]],
     ) -> dict[str, dict[str, Any]]:
         """Build Placid layers dict from slots."""
         layers: dict[str, dict[str, Any]] = {}
@@ -171,9 +192,13 @@ class CreativeEngine:
                 if not inputs.get(toggle_name, True):  # Default to included
                     continue  # Skip this slot
 
-            # Uniform value lookup - modulo indexing (cycles through results)
+            # Smart indexing: distributes across slots first, then creatives
+            # Formula: (creative_index * num_slots + slot_idx) % len(results)
             results = source_results[slot.source]
-            value = results[index % len(results)]
+            num_slots = slot_indices[slot.source]["count"]
+            slot_idx = slot_indices[slot.source]["slots"][slot.name]
+            result_index = (index * num_slots + slot_idx) % len(results)
+            value = results[result_index]
 
             # Parse slot name and build layer
             layer_name, prop_name = slot.name.split(".")

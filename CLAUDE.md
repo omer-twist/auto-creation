@@ -9,9 +9,14 @@ Marketing creative generation system for affiliate campaigns. Takes a topic (e.g
 ## Commands
 
 ```bash
-# Run locally (product_cluster is the default creative type)
+# Run locally
 python -m src.handlers.worker "<topic>" "<event>" "<discount>" "<page_type>" [creative_type] [inputs_json]
+
+# product_cluster - combines products into single image
 python -m src.handlers.worker "Girls Bracelet Kit" "Black Friday" "50%" category product_cluster '{"product_image_urls": ["url1", "url2", "url3"]}'
+
+# product_grid - 8 individual product images in grid layout
+python -m src.handlers.worker "Girls Bracelet Kit" "Black Friday" "50%" category product_grid '{"product_image_urls": ["url1", "url2", "url3", "url4", "url5", "url6", "url7", "url8"]}'
 
 # Deploy (builds, pushes to ECR, updates both lambdas)
 ./deploy.sh
@@ -87,19 +92,101 @@ Generator inputs are declared in `src/generators/inputs.py` (kept separate to av
 
 ### Adding a New Creative Type
 
-1. Create config in `src/creative_types/new_type.py`
-2. Register in `src/creative_types/__init__.py`
-3. Add generator inputs to `src/generators/inputs.py`
-4. Create generators if needed (or reuse existing ones)
+#### Questions to Ask User
+
+**1. Placid Template Info:**
+- What is the Placid template UUID(s)?
+- What are all the layer names? (e.g., `header`, `main_text`, `image`, `bg-left`)
+- For each layer, what type? (`text`, `image`, `background_color`)
+- For image layers: what dimensions/aspect ratio? (e.g., 16:9, 1:1, 270x270)
+
+**2. Image Generation:**
+- How many product images as input?
+- Combined into one (cluster) or separate (grid)?
+- What aspect ratio for generated images?
+  - `image.cluster` default: **16:9**
+  - `image.product` default: **1:1**
+- Override via `generator_config={"aspect_ratio": "16:9"}` on slot
+
+**3. Color/Style Variants:**
+- How many color variants? (e.g., 4 variants × 3 = 12 creatives)
+- For each variant, what are the hex colors for each background layer?
+- Any text color changes? (usually handled by Placid template variants)
+
+**4. Template Variants:**
+- Single template or multiple? (e.g., dark text vs white text)
+- If multiple, what's the sequence? (e.g., 6 dark + 6 light)
+
+**5. Text:**
+- Has header? Optional or required?
+- Has main_text? (usually yes, uses `text.main_text`)
+
+#### Implementation Steps
+
+1. **Create config** in `src/creative_types/new_type.py`:
+   ```python
+   CreativeTypeConfig(
+       name="new_type",
+       display_name="New Type",
+       variants={"default": "PLACID_UUID"},
+       variant_sequence=["default"] * 12,
+       style_pool=[...],  # 12 entries for colors
+       slots=[
+           Slot(name="layer.property", source="generator.name"),
+           # For images with non-default aspect ratio:
+           Slot(name="image.image", source="image.cluster",
+                generator_config={"aspect_ratio": "16:9"}),
+       ],
+   )
+   ```
+
+2. **Register** in `src/creative_types/__init__.py`
+
+3. **Add inputs** to `src/generators/inputs.py` if using new generator
+
+4. **Create generator** if needed (or reuse `image.cluster`, `image.product`, etc.)
+
+#### Generator Aspect Ratios
+
+| Generator | Default | Override via |
+|-----------|---------|--------------|
+| `image.cluster` | 16:9 | `generator_config={"aspect_ratio": "X:Y"}` |
+| `image.product` | 1:1 | `generator_config={"aspect_ratio": "X:Y"}` |
+
+#### Slot-to-Source Mapping
+
+- **Text layers**: `source="text.header"` or `source="text.main_text"`
+- **Image layers**: `source="image.cluster"` (combined) or `source="image.product"` (individual)
+- **Background colors**: `source="style.field_name"` (from style_pool)
 
 No handler changes required - the engine routes based on config.
 
 ### Key Concepts
 
 - **Slot**: Maps a Placid layer (e.g., `header.text`) to a source (`text.header` or `style.background_color`)
-- **Modulo indexing**: `results[i % len(results)]` - 1 result broadcasts to all, 12 results map 1:1
+- **Smart slot indexing**: `results[(creative_idx * num_slots + slot_idx) % len(results)]`
+  - Distributes values across slots first, then creatives
+  - 1 result → broadcasts to all slots/creatives
+  - N results matching N slots → each slot gets unique value, all creatives same
+  - N×M results → each slot in each creative gets unique value
 - **style_pool**: Pre-defined values for `style.*` sources (colors, fonts)
 - **variant_sequence**: Which Placid template to use for each creative index
+
+### Available Generators
+
+| Generator | Source | Returns | Use Case |
+|-----------|--------|---------|----------|
+| `text.header` | `text.header` | 1 or N strings | Header text (broadcasts) |
+| `text.main_text` | `text.main_text` | 12 strings | Main ad copy (1 per creative) |
+| `image.cluster` | `image.cluster` | 1 URL | Combined product cluster image |
+| `image.product` | `image.product` | N URLs | Individual product images (1 per slot) |
+
+### Creative Types
+
+| Type | Description | Image Source |
+|------|-------------|--------------|
+| `product_cluster` | Single combined product image | `image.cluster` (1 image) |
+| `product_grid` | 8 individual product images in grid | `image.product` (8 images) |
 
 ### Infrastructure
 
