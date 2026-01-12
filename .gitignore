@@ -12,3 +12,4 @@ terraform/*.tfvars
 terraform/lambda.zip
 terraform/layer.zip
 terraform/.terraform.lock.hcl
+tmpclaude-*
