@@ -38,7 +38,7 @@ PRODUCT_CLUSTER_CONFIG = CreativeTypeConfig(
             optional=True,
             label="Header",
         ),
-        Slot(name="main_text.text", source="text.main_text"),
+        Slot(name="main_text.text", source="text.main_text", batch_creatives=True),
         Slot(
             name="image.image",
             source="image.cluster",

@@ -13,3 +13,4 @@ class Slot:
     # UI options (flattened from SlotUI)
     optional: bool = False       # User can exclude this slot
     label: str | None = None     # Display name for UI toggle
+    batch_creatives: bool = False  # If True, generator returns N values (one per creative)

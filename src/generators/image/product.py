@@ -12,11 +12,10 @@ from ...clients.creative import CreativeClient
 
 @register("image.product")
 class ProductImageGenerator(ImageGenerator):
-    """Generates clean product images from product URLs.
+    """Generates a clean product image from a single product URL.
 
-    Unlike ClusterImageGenerator which combines products into one image,
-    this generator processes each product individually and returns multiple URLs.
-    The engine's smart indexing distributes them across slots.
+    Uses input_index from generator_config to select which URL to process.
+    Returns 1 image that broadcasts to all creatives.
     """
 
     # INPUTS defined in src/generators/inputs.py (kept separate to avoid heavy imports in serializers)
@@ -31,30 +30,35 @@ class ProductImageGenerator(ImageGenerator):
         self.gemini = gemini
 
     def _generate_raw(self, context: GenerationContext) -> list[bytes]:
-        """Download and process each product image via Gemini."""
+        """Download and process a single product image via Gemini."""
         image_urls = context.inputs.get("product_image_urls", [])
+        input_index = context.inputs.get("input_index")
         aspect_ratio = context.inputs.get("aspect_ratio", "1:1")
 
+        if input_index is None:
+            raise ValueError("input_index required for image.product generator")
         if not image_urls:
             raise ValueError("No product_image_urls provided")
+        if input_index >= len(image_urls):
+            raise ValueError(
+                f"input_index {input_index} out of range (have {len(image_urls)} URLs)"
+            )
         if not self.gemini:
             raise ValueError("GeminiClient required for product image generation")
 
-        results = []
-        for i, url in enumerate(image_urls):
-            print(f"Processing product image {i + 1}/{len(image_urls)}...", flush=True)
+        url = image_urls[input_index]
+        print(f"Processing product image {input_index + 1}/{len(image_urls)}...", flush=True)
 
-            # Download
-            image_bytes = self._download_image(url, i)
+        # Download
+        image_bytes = self._download_image(url, input_index)
 
-            # Gemini single product cleanup
-            processed_bytes = self.gemini.generate_single_product(
-                product_image=image_bytes,
-                aspect_ratio=aspect_ratio,
-            )
-            results.append(processed_bytes)
+        # Gemini single product cleanup
+        processed_bytes = self.gemini.generate_single_product(
+            product_image=image_bytes,
+            aspect_ratio=aspect_ratio,
+        )
 
-        return results
+        return [processed_bytes]
 
     def _download_image(self, url: str, index: int) -> bytes:
         """Download a single image from URL."""

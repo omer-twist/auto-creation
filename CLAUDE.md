@@ -38,11 +38,16 @@ CreativeTypeConfig (src/creative_types/)
     ├── style_pool: [{background_color: "#FFF"}, ...]
     └── slots: [
             Slot(name="header.text", source="text.header"),
-            Slot(name="main_text.text", source="text.main_text"),
+            Slot(name="main_text.text", source="text.main_text", batch_creatives=True),
             Slot(name="image.image", source="image.cluster"),
             Slot(name="bg.background_color", source="style.background_color"),
         ]
 ```
+
+**Slot flags:**
+- `batch_creatives=True`: Generator returns N values (one per creative), each creative gets `results[i]`
+- `batch_creatives=False` (default): Generator returns 1 value, broadcasts to all creatives
+- `style.*` sources: Always vary per creative (indexed automatically)
 
 ### Data Flow
 
@@ -56,15 +61,14 @@ Worker Handler
     ▼
 CreativeEngine.generate(topic, config, inputs, options, count=12)
     │
-    ├── _resolve_sources() → runs each generator once, caches results
-    │       text.header    → ["TOPIC NAME"] (broadcasts to all 12)
-    │       text.main_text → ["line1", "line2", ...] (12 variations)
-    │       image.cluster  → ["https://..."] (1 image, broadcasts)
-    │       style.*        → values from config.style_pool
+    ├── _resolve_sources() → resolves each source based on batch_creatives flag
+    │       batch_creatives=True:  1 call, count=N → list of N values
+    │       batch_creatives=False: 1 call per slot, count=1 → dict by slot.name
+    │       style.*: always returns list of N values from style_pool
     │
     └── _build_creatives() → for each of 12 creatives:
             1. Select variant (dark/light) from variant_sequence
-            2. Build layers dict using modulo indexing
+            2. _build_layers(): batch slots index by creative_idx, others by slot.name
             3. Submit to Placid via submit_generic_job()
             4. Poll for result → Creative(creative_url)
     │
@@ -132,10 +136,20 @@ Generator inputs are declared in `src/generators/inputs.py` (kept separate to av
        variant_sequence=["default"] * 12,
        style_pool=[...],  # 12 entries for colors
        slots=[
-           Slot(name="layer.property", source="generator.name"),
-           # For images with non-default aspect ratio:
-           Slot(name="image.image", source="image.cluster",
-                generator_config={"aspect_ratio": "16:9"}),
+           # Broadcasts same value to all creatives
+           Slot(name="header.text", source="text.header"),
+
+           # Different value per creative (batch_creatives=True)
+           Slot(name="main_text.text", source="text.main_text", batch_creatives=True),
+
+           # Multiple slots using same source - use explicit input_index
+           Slot(name="img1.image", source="image.product",
+                generator_config={"input_index": 0, "aspect_ratio": "1:1"}),
+           Slot(name="img2.image", source="image.product",
+                generator_config={"input_index": 1, "aspect_ratio": "1:1"}),
+
+           # Style sources vary per creative automatically
+           Slot(name="bg.background_color", source="style.background_color"),
        ],
    )
    ```
@@ -164,22 +178,21 @@ No handler changes required - the engine routes based on config.
 ### Key Concepts
 
 - **Slot**: Maps a Placid layer (e.g., `header.text`) to a source (`text.header` or `style.background_color`)
-- **Smart slot indexing**: `results[(creative_idx * num_slots + slot_idx) % len(results)]`
-  - Distributes values across slots first, then creatives
-  - 1 result → broadcasts to all slots/creatives
-  - N results matching N slots → each slot gets unique value, all creatives same
-  - N×M results → each slot in each creative gets unique value
-- **style_pool**: Pre-defined values for `style.*` sources (colors, fonts)
+- **batch_creatives flag**: Controls how values are distributed
+  - `False` (default): 1 value per slot, broadcasts to all creatives
+  - `True`: N values (one per creative), each creative gets `results[creative_idx]`
+- **input_index**: For multi-slot sources (e.g., 8 image slots), use `generator_config={"input_index": N}` to specify which input URL each slot uses
+- **style_pool**: Pre-defined values for `style.*` sources (colors, fonts) - always varies per creative
 - **variant_sequence**: Which Placid template to use for each creative index
 
 ### Available Generators
 
-| Generator | Source | Returns | Use Case |
-|-----------|--------|---------|----------|
-| `text.header` | `text.header` | 1 or N strings | Header text (broadcasts) |
-| `text.main_text` | `text.main_text` | 12 strings | Main ad copy (1 per creative) |
-| `image.cluster` | `image.cluster` | 1 URL | Combined product cluster image |
-| `image.product` | `image.product` | N URLs | Individual product images (1 per slot) |
+| Generator | Source | batch_creatives | Returns | Use Case |
+|-----------|--------|-----------------|---------|----------|
+| `text.header` | `text.header` | `False` | 1 string | Header text (broadcasts to all) |
+| `text.main_text` | `text.main_text` | `True` | N strings | Main ad copy (1 per creative) |
+| `image.cluster` | `image.cluster` | `False` | 1 URL | Combined product cluster image |
+| `image.product` | `image.product` | `False` | 1 URL | Single product image (uses `input_index`) |
 
 ### Creative Types
 

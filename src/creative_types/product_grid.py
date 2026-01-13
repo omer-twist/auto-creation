@@ -42,19 +42,19 @@ PRODUCT_GRID_CONFIG = CreativeTypeConfig(
         BROWN, BROWN, BROWN,
     ],
     slots=[
-        # Main text
-        Slot(name="main_text.text", source="text.main_text"),
-        # 8 product image slots - engine distributes via smart indexing
+        # Main text - varies per creative
+        Slot(name="main_text.text", source="text.main_text", batch_creatives=True),
+        # 8 product image slots - explicit input_index for each
         # aspect_ratio 1:1 for 270x270 grid cells
-        Slot(name="img-right-1.image", source="image.product", generator_config={"aspect_ratio": "1:1"}),
-        Slot(name="img-right-2.image", source="image.product"),
-        Slot(name="img-right-3.image", source="image.product"),
-        Slot(name="img-right-4.image", source="image.product"),
-        Slot(name="img-right-5.image", source="image.product"),
-        Slot(name="img-right-6.image", source="image.product"),
-        Slot(name="img-right-7.image", source="image.product"),
-        Slot(name="img-right-8.image", source="image.product"),
-        # 9 background color slots
+        Slot(name="img-right-1.image", source="image.product", generator_config={"input_index": 0, "aspect_ratio": "1:1"}),
+        Slot(name="img-right-2.image", source="image.product", generator_config={"input_index": 1, "aspect_ratio": "1:1"}),
+        Slot(name="img-right-3.image", source="image.product", generator_config={"input_index": 2, "aspect_ratio": "1:1"}),
+        Slot(name="img-right-4.image", source="image.product", generator_config={"input_index": 3, "aspect_ratio": "1:1"}),
+        Slot(name="img-right-5.image", source="image.product", generator_config={"input_index": 4, "aspect_ratio": "1:1"}),
+        Slot(name="img-right-6.image", source="image.product", generator_config={"input_index": 5, "aspect_ratio": "1:1"}),
+        Slot(name="img-right-7.image", source="image.product", generator_config={"input_index": 6, "aspect_ratio": "1:1"}),
+        Slot(name="img-right-8.image", source="image.product", generator_config={"input_index": 7, "aspect_ratio": "1:1"}),
+        # 9 background color slots - style.* sources vary per creative automatically
         Slot(name="bg-left.background_color", source="style.bg_left"),
         Slot(name="bg-right-1.background_color", source="style.bg_right_1"),
         Slot(name="bg-right-2.background_color", source="style.bg_right_2"),

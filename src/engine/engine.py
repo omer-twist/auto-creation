@@ -1,6 +1,7 @@
 """Creative generation engine."""
 
 import time
+from collections import defaultdict
 from typing import Any
 
 from ..models.topic import Topic
@@ -53,43 +54,58 @@ class CreativeEngine:
         inputs: dict[str, Any],
         options: dict[str, Any],
         count: int,
-    ) -> dict[str, list[Any]]:
-        """Resolve all sources (generators and style_pool) to lists of values."""
-        results: dict[str, list[Any]] = {}
+    ) -> dict[str, Any]:
+        """Resolve all sources (generators and style_pool) to values.
 
-        # Find unique sources and their configs
-        sources = set()
-        generator_configs = {}  # source -> generator_config
+        For batch_creatives=True: returns list of N values (one per creative)
+        For batch_creatives=False: returns dict keyed by slot.name (one value per slot)
+        """
+        results: dict[str, Any] = {}
+
+        # Group slots by source
+        slots_by_source: dict[str, list] = defaultdict(list)
         for slot in config.slots:
-            sources.add(slot.source)
-            if slot.generator_config:
-                generator_configs[slot.source] = slot.generator_config
+            slots_by_source[slot.source].append(slot)
 
-        # Resolve each source
-        for source in sources:
+        for source, slots in slots_by_source.items():
             if source.startswith("style."):
-                # Handle style sources from style_pool
-                results[source] = self._resolve_style_source(source, config)
-            else:
-                # Handle generator sources
-                merged_inputs = {**inputs}
-                if source in generator_configs:
-                    merged_inputs.update(generator_configs[source])
+                # Style sources always return list (one per creative)
+                results[source] = self._resolve_style_source(source, config, count)
+                continue
 
+            generator = self._create_generator(source)
+            batch_creatives = any(s.batch_creatives for s in slots)
+
+            if batch_creatives:
+                # 1 call, count=creative_count → list of N values
                 context = GenerationContext(
                     topic=topic,
-                    inputs=merged_inputs,
+                    inputs=inputs,
                     options=options,
                     count=count,
                 )
-
-                generator = self._create_generator(source)
                 results[source] = generator.generate(context)
+            else:
+                # 1 call per slot, count=1 → dict keyed by slot.name
+                results[source] = {}
+                for slot in slots:
+                    merged_inputs = {**inputs}
+                    if slot.generator_config:
+                        merged_inputs.update(slot.generator_config)
+
+                    context = GenerationContext(
+                        topic=topic,
+                        inputs=merged_inputs,
+                        options=options,
+                        count=1,
+                    )
+                    value_list = generator.generate(context)
+                    results[source][slot.name] = value_list[0]
 
         return results
 
     def _resolve_style_source(
-        self, source: str, config: CreativeTypeConfig
+        self, source: str, config: CreativeTypeConfig, count: int
     ) -> list[Any]:
         """Resolve style.* source from config.style_pool."""
         if not config.style_pool:
@@ -98,8 +114,10 @@ class CreativeEngine:
         # source = "style.background_color" → field = "background_color"
         field = source.split(".", 1)[1]
 
-        # Extract field from each style dict
-        return [style[field] for style in config.style_pool]
+        # Extract field from each style dict, cycling if needed
+        values = [style[field] for style in config.style_pool]
+        # Extend to count if style_pool is shorter
+        return [values[i % len(values)] for i in range(count)]
 
     def _create_generator(self, source: str):
         """Create generator instance with appropriate clients."""
@@ -120,16 +138,13 @@ class CreativeEngine:
     def _build_creatives(
         self,
         config: CreativeTypeConfig,
-        source_results: dict[str, list[Any]],
+        source_results: dict[str, Any],
         inputs: dict[str, Any],
         count: int,
     ) -> list[Creative]:
         """Build creatives by submitting Placid jobs."""
         creatives = []
         job_ids = []
-
-        # Pre-compute slot indices for smart distribution
-        slot_indices = self._compute_slot_indices(config)
 
         # Submit all jobs first (parallel processing on Placid side)
         for i in range(count):
@@ -140,7 +155,7 @@ class CreativeEngine:
                 variant = list(config.variants.keys())[0]  # first/only
             variant_uuid = config.variants[variant]
 
-            layers = self._build_layers(config, source_results, inputs, i, slot_indices)
+            layers = self._build_layers(config, source_results, inputs, i)
             job_id = self.creative.submit_generic_job(variant_uuid, layers)
             job_ids.append((job_id, layers, variant))
 
@@ -157,32 +172,18 @@ class CreativeEngine:
 
         return creatives
 
-    def _compute_slot_indices(
-        self, config: CreativeTypeConfig
-    ) -> dict[str, dict[str, Any]]:
-        """Compute slot indices for each source (for smart distribution)."""
-        slot_indices: dict[str, dict[str, Any]] = {}
-
-        for slot in config.slots:
-            source = slot.source
-            if source not in slot_indices:
-                slot_indices[source] = {"count": 0, "slots": {}}
-
-            # Assign index to this slot for its source
-            slot_indices[source]["slots"][slot.name] = slot_indices[source]["count"]
-            slot_indices[source]["count"] += 1
-
-        return slot_indices
-
     def _build_layers(
         self,
         config: CreativeTypeConfig,
-        source_results: dict[str, list[Any]],
+        source_results: dict[str, Any],
         inputs: dict[str, Any],
-        index: int,
-        slot_indices: dict[str, dict[str, Any]],
+        creative_idx: int,
     ) -> dict[str, dict[str, Any]]:
-        """Build Placid layers dict from slots."""
+        """Build Placid layers dict from slots.
+
+        For batch_creatives=True or style.*: index by creative_idx into list
+        For batch_creatives=False: key by slot.name into dict
+        """
         layers: dict[str, dict[str, Any]] = {}
 
         for slot in config.slots:
@@ -192,13 +193,14 @@ class CreativeEngine:
                 if not inputs.get(toggle_name, True):  # Default to included
                     continue  # Skip this slot
 
-            # Smart indexing: distributes across slots first, then creatives
-            # Formula: (creative_index * num_slots + slot_idx) % len(results)
             results = source_results[slot.source]
-            num_slots = slot_indices[slot.source]["count"]
-            slot_idx = slot_indices[slot.source]["slots"][slot.name]
-            result_index = (index * num_slots + slot_idx) % len(results)
-            value = results[result_index]
+
+            if slot.batch_creatives or slot.source.startswith("style."):
+                # Indexed by creative (list of N values)
+                value = results[creative_idx]
+            else:
+                # Keyed by slot name (dict, same for all creatives)
+                value = results[slot.name]
 
             # Parse slot name and build layer
             layer_name, prop_name = slot.name.split(".")

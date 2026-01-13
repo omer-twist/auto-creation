@@ -7,7 +7,7 @@ resource "aws_lambda_function" "worker" {
   role          = aws_iam_role.lambda.arn
   package_type  = "Image"
   image_uri     = "${aws_ecr_repository.worker.repository_url}:latest"
-  timeout       = 300 # 5 minutes
+  timeout       = 600 # 10 minutes
   memory_size   = 512
 
   environment {
