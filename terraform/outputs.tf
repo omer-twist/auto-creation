@@ -27,6 +27,12 @@ output "ecr_repository_url" {
   value       = aws_ecr_repository.worker.repository_url
 }
 
+# S3 Assets
+output "assets_bucket_url" {
+  description = "Public URL for static assets"
+  value       = "https://${aws_s3_bucket.assets.bucket}.s3.amazonaws.com"
+}
+
 # Deployment helper
 output "docker_push_commands" {
   description = "Commands to build and push Docker image"

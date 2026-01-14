@@ -41,6 +41,9 @@ PRODUCT_GRID_CONFIG = CreativeTypeConfig(
         # Brown (x3)
         BROWN, BROWN, BROWN,
     ],
+    cta_pool=[
+        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/white.png"},
+    ] * 12,  # Same white CTA for all creatives (for now)
     slots=[
         # Main text - varies per creative
         Slot(name="main_text.text", source="text.main_text", batch_creatives=True),
@@ -64,5 +67,7 @@ PRODUCT_GRID_CONFIG = CreativeTypeConfig(
         Slot(name="bg-right-6.background_color", source="style.bg_right_6"),
         Slot(name="bg-right-7.background_color", source="style.bg_right_7"),
         Slot(name="bg-right-8.background_color", source="style.bg_right_8"),
+        # CTA button
+        Slot(name="cta.image", source="cta.button_image"),
     ],
 )

@@ -73,6 +73,11 @@ class CreativeEngine:
                 results[source] = self._resolve_style_source(source, config, count)
                 continue
 
+            if source.startswith("cta."):
+                # CTA sources always return list (one per creative)
+                results[source] = self._resolve_cta_source(source, config, count)
+                continue
+
             generator = self._create_generator(source)
             batch_creatives = any(s.batch_creatives for s in slots)
 
@@ -117,6 +122,21 @@ class CreativeEngine:
         # Extract field from each style dict, cycling if needed
         values = [style[field] for style in config.style_pool]
         # Extend to count if style_pool is shorter
+        return [values[i % len(values)] for i in range(count)]
+
+    def _resolve_cta_source(
+        self, source: str, config: CreativeTypeConfig, count: int
+    ) -> list[Any]:
+        """Resolve cta.* source from config.cta_pool."""
+        if not config.cta_pool:
+            raise ValueError(f"No cta_pool defined for source: {source}")
+
+        # source = "cta.button_image" → field = "button_image"
+        field = source.split(".", 1)[1]
+
+        # Extract field from each cta dict, cycling if needed
+        values = [cta[field] for cta in config.cta_pool]
+        # Extend to count if cta_pool is shorter
         return [values[i % len(values)] for i in range(count)]
 
     def _create_generator(self, source: str):
@@ -195,7 +215,7 @@ class CreativeEngine:
 
             results = source_results[slot.source]
 
-            if slot.batch_creatives or slot.source.startswith("style."):
+            if slot.batch_creatives or slot.source.startswith("style.") or slot.source.startswith("cta."):
                 # Indexed by creative (list of N values)
                 value = results[creative_idx]
             else:

@@ -37,4 +37,5 @@ class CreativeTypeConfig:
     variant_sequence: list[str] | None   # ["dark", "light"] * 6, or None for single variant
     slots: list[Slot]
     style_pool: list[dict[str, Any]] | None = None  # Static style values per creative
+    cta_pool: list[dict[str, Any]] | None = None  # CTA images per creative
     # Note: Fields are now declared by generators (INPUTS) and collected by serializer
