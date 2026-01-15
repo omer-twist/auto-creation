@@ -136,9 +136,9 @@ class GeminiClient:
             Generated image bytes (clean product on white background)
         """
         prompt = (
-            "Extract the product from this image and place it on a clean white background. "
+            "Extract the product from this image exactly as is and place it on a clean white background. "
             "Keep the product centered and upright. "
-            "Maintain the original product appearance - do not modify its colors or details. "
+            "Maintain the original product appearance - do not modify its colors, shape, or details. "
             "Output a single clean product image."
         )
 
