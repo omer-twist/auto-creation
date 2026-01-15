@@ -20,10 +20,10 @@ def _make_style(bg_left, bg_right_1, bg_right_2, bg_right_3, bg_right_4):
 
 
 # Color variants (each repeated 3 times = 12 total)
-PINK = _make_style("#E8AAAC", "#E8AAAC", "#DA8C90", "#827171", "#D4D2D6")
+PINK = _make_style("#DA8C90", "#E8AAAC", "#DA8C90", "#827171", "#D4D2D6")
 PURPLE = _make_style("#855E89", "#DBD4FD", "#855E89", "#827171", "#D4D2D6")
 BLUE = _make_style("#597A9A", "#B5D7E6", "#597A9A", "#827171", "#D4D2D6")
-BROWN = _make_style("#362626", "#DA8C90", "#E8AAAC", "#D4D2D6", "#827171")
+BROWN = _make_style("#362626", "#FDEDD4", "#A69A87", "#827171", "#D4D2D6")
 
 
 PRODUCT_GRID_CONFIG = CreativeTypeConfig(
@@ -42,8 +42,23 @@ PRODUCT_GRID_CONFIG = CreativeTypeConfig(
         BROWN, BROWN, BROWN,
     ],
     cta_pool=[
-        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/white.png"},
-    ] * 12,  # Same white CTA for all creatives (for now)
+        # Pink (x3) - bg_right_1 = #E8AAAC
+        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23E8AAAC/black.png"},
+        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23E8AAAC/black.png"},
+        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23E8AAAC/black.png"},
+        # Purple (x3) - bg_right_1 = #DBD4FD
+        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23DBD4FD/black.png"},
+        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23DBD4FD/black.png"},
+        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23DBD4FD/black.png"},
+        # Blue (x3) - bg_right_1 = #B5D7E6
+        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23B5D7E6/black.png"},
+        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23B5D7E6/black.png"},
+        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23B5D7E6/black.png"},
+        # Brown (x3) - bg_right_1 = #DA8C90
+        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23DA8C90/black.png"},
+        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23DA8C90/black.png"},
+        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23DA8C90/black.png"},
+    ],
     slots=[
         # Main text - varies per creative
         Slot(name="main_text.text", source="text.main_text", batch_creatives=True),
