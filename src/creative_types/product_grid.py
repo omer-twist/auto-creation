@@ -54,10 +54,10 @@ PRODUCT_GRID_CONFIG = CreativeTypeConfig(
         {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23B5D7E6/black.png"},
         {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23B5D7E6/black.png"},
         {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23B5D7E6/black.png"},
-        # Brown (x3) - bg_right_1 = #DA8C90
-        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23DA8C90/black.png"},
-        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23DA8C90/black.png"},
-        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23DA8C90/black.png"},
+        # Brown (x3) - bg_right_1 = #FDEDD4
+        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23FDEDD4/black.png"},
+        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23FDEDD4/black.png"},
+        {"button_image": "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23FDEDD4/black.png"},
     ],
     slots=[
         # Main text - varies per creative
