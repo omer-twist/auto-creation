@@ -176,6 +176,7 @@ class CreativeEngine:
             variant_uuid = config.variants[variant]
 
             layers = self._build_layers(config, source_results, inputs, i)
+            print(f"[DEBUG] Creative {i} layers: {layers}", flush=True)
             job_id = self.creative.submit_generic_job(variant_uuid, layers)
             job_ids.append((job_id, layers, variant))
 
