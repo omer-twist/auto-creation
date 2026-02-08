@@ -1,12 +1,14 @@
 """Creative types registry."""
 
 from ..models.config import CreativeTypeConfig
+from .half_half import HALF_HALF_CONFIG
 from .product_cluster import PRODUCT_CLUSTER_CONFIG
 from .product_grid import PRODUCT_GRID_CONFIG
 
 CREATIVE_TYPES: dict[str, CreativeTypeConfig] = {
     "product_cluster": PRODUCT_CLUSTER_CONFIG,
     "product_grid": PRODUCT_GRID_CONFIG,
+    "half_half": HALF_HALF_CONFIG,
 }
 
 
