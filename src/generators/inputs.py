@@ -34,6 +34,12 @@ GENERATOR_INPUTS: dict[str, list[Field]] = {
             label="Product Image URLs",
             required=True,
         ),
+        Field(
+            name="use_original_image",
+            type="toggle",
+            label="Use Original Image",
+            default=False,
+        ),
     ],
 }
 

@@ -43,14 +43,19 @@ class ProductImageGenerator(ImageGenerator):
             raise ValueError(
                 f"input_index {input_index} out of range (have {len(image_urls)} URLs)"
             )
-        if not self.gemini:
-            raise ValueError("GeminiClient required for product image generation")
 
         url = image_urls[input_index]
         print(f"Processing product image {input_index + 1}/{len(image_urls)}...", flush=True)
 
         # Download
         image_bytes = self._download_image(url, input_index)
+
+        # Skip Gemini processing if use_original_image is enabled
+        if context.inputs.get("use_original_image", False):
+            return [image_bytes]
+
+        if not self.gemini:
+            raise ValueError("GeminiClient required for product image generation")
 
         # Gemini single product cleanup
         processed_bytes = self.gemini.generate_single_product(
