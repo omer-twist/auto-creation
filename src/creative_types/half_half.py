@@ -6,15 +6,15 @@ from ..models.slot import Slot
 # (bg_left, bg_right, text_color, cta_url)
 _VARIANTS = [
     (
-        "#ebd4f1", "#ebe4e4", "#5F5151",
+        "#ebd4f1", "#dfd2d2", "#5F5151",
         "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%238994B2/black.png",
     ),
     (
-        "#b8c2dd", "#f8f4ea", "#5F5151",
+        "#b8c2dd", "#dfd2d2", "#5F5151",
         "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23004AAD/black.png",
     ),
     (
-        "#cba29c", "#d9d9d9", "#5F5151",
+        "#cba29c", "#dfd2d2", "#5F5151",
         "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23691A1E/white.png",
     ),
     (
