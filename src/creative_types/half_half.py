@@ -58,6 +58,6 @@ HALF_HALF_CONFIG = CreativeTypeConfig(
         # CTA button
         Slot(name="cta.image", source="cta.button_image"),
         # Product image - single image broadcast to all 12
-        Slot(name="image.image", source="image.product", generator_config={"input_index": 0, "aspect_ratio": "3:8"}),
+        Slot(name="image.image", source="image.product", generator_config={"input_index": 0, "aspect_ratio": "9:16"}),
     ],
 )
