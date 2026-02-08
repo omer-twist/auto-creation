@@ -47,12 +47,10 @@ class ProductImageGenerator(ImageGenerator):
         url = image_urls[input_index]
         print(f"Processing product image {input_index + 1}/{len(image_urls)}...", flush=True)
 
+        use_original_image = context.inputs.get("use_original_image", False)
+
         # Download
         image_bytes = self._download_image(url, input_index)
-
-        # Skip Gemini processing if use_original_image is enabled
-        if context.inputs.get("use_original_image", False):
-            return [image_bytes]
 
         if not self.gemini:
             raise ValueError("GeminiClient required for product image generation")
@@ -61,6 +59,7 @@ class ProductImageGenerator(ImageGenerator):
         processed_bytes = self.gemini.generate_single_product(
             product_image=image_bytes,
             aspect_ratio=aspect_ratio,
+            use_original_image=use_original_image,
         )
 
         return [processed_bytes]

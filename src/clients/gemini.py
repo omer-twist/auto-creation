@@ -124,6 +124,7 @@ class GeminiClient:
         self,
         product_image: bytes,
         aspect_ratio: str = "1:1",
+        use_original_image: bool = False,
     ) -> bytes:
         """
         Generate a clean single product image.
@@ -131,16 +132,25 @@ class GeminiClient:
         Args:
             product_image: Product image bytes
             aspect_ratio: Output aspect ratio (default 1:1 for square)
+            use_original_image: If True, preserve original image as-is (don't extract/regenerate)
 
         Returns:
             Generated image bytes (clean product on white background)
         """
-        prompt = (
-            "Extract the product from this image exactly as is and place it on a clean white background. "
-            "Keep the product centered and upright. "
-            "Maintain the original product appearance - do not modify its colors, shape, or details. "
-            "Output a single clean product image."
-        )
+        if use_original_image:
+            prompt = (
+                "Place this image on a clean white background. "
+                "IMPORTANT: Preserve the image exactly as provided - do not modify, crop, or extract elements from it. "
+                "Keep it centered and upright. "
+                "Output a single clean image."
+            )
+        else:
+            prompt = (
+                "Extract the product from this image exactly as is and place it on a clean white background. "
+                "Keep the product centered and upright. "
+                "Maintain the original product appearance - do not modify its colors, shape, or details. "
+                "Output a single clean product image."
+            )
 
         # Convert bytes to PIL image
         img = Image.open(BytesIO(product_image))
