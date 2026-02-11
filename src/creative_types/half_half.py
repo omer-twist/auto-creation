@@ -3,41 +3,23 @@
 from ..models.config import CreativeTypeConfig
 from ..models.slot import Slot
 
-# (bg_left, bg_right, text_color, cta_url)
+_S3 = "https://creatives-dealogic-assets.s3.amazonaws.com/cta"
+
+# (bg_left, bg_right, text_color, cta_url) — 12 unique variants
 _VARIANTS = [
-    (
-        "#ebd4f1", "#dfd2d2", "#5F5151",
-        "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%238994B2/black.png",
-    ),
-    (
-        "#b8c2dd", "#dfd2d2", "#5F5151",
-        "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23004AAD/black.png",
-    ),
-    (
-        "#cba29c", "#dfd2d2", "#5F5151",
-        "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23691A1E/white.png",
-    ),
-    (
-        "#626686", "#d9d9d9", "#FFFFFF",
-        "https://creatives-dealogic-assets.s3.amazonaws.com/cta/%23A6A6A6/white.png",
-    ),
+    ("#DA8C90", "#D4D2D6", "#FFFFFF", f"{_S3}/%238994B2/black.png"),
+    ("#827171", "#DEE3EF", "#FFFFFF", f"{_S3}/%23FDEDD4/black.png"),
+    ("#855E89", "#DEE3EF", "#FFFFFF", f"{_S3}/%23FDEDD4/black.png"),
+    ("#B5D7E6", "#ECEFF8", "#000000", f"{_S3}/%23004AAD/black.png"),
+    ("#827171", "#FDEDD4", "#FFFFFF", f"{_S3}/%23FDEDD4/black.png"),
+    ("#DBD4FD", "#D4D2D6", "#000000", f"{_S3}/%23004AAD/black.png"),
+    ("#E8AAAC", "#E1DEDB", "#000000", f"{_S3}/%238994B2/black.png"),
+    ("#B8C2DD", "#E1DEDB", "#000000", f"{_S3}/%23004AAD/black.png"),
+    ("#626686", "#E1DEDB", "#FFFFFF", f"{_S3}/%23FDEDD4/black.png"),
+    ("#E2A9F1", "#E1DEDB", "#000000", f"{_S3}/%23004AAD/black.png"),
+    ("#569677", "#FFF6EE", "#FFFFFF", f"{_S3}/%23FDEDD4/black.png"),
+    ("#FDEDD4", "#FFF6EE", "#000000", f"{_S3}/%23691A1E/white.png"),
 ]
-
-
-def _build_style_pool():
-    pool = []
-    for bg_left, bg_right, text_color, _ in _VARIANTS:
-        entry = {"bg_left": bg_left, "bg_right": bg_right, "text_color": text_color}
-        pool.extend([entry] * 3)
-    return pool
-
-
-def _build_cta_pool():
-    pool = []
-    for _, _, _, cta_url in _VARIANTS:
-        entry = {"button_image": cta_url}
-        pool.extend([entry] * 3)
-    return pool
 
 
 HALF_HALF_CONFIG = CreativeTypeConfig(
@@ -45,8 +27,13 @@ HALF_HALF_CONFIG = CreativeTypeConfig(
     display_name="Half Half",
     variants={"default": "iiuu1uj0yzwbk"},
     variant_sequence=["default"] * 12,
-    style_pool=_build_style_pool(),
-    cta_pool=_build_cta_pool(),
+    style_pool=[
+        {"bg_left": bl, "bg_right": br, "text_color": tc}
+        for bl, br, tc, _ in _VARIANTS
+    ],
+    cta_pool=[
+        {"button_image": cta} for _, _, _, cta in _VARIANTS
+    ],
     slots=[
         # Main text - varies per creative
         Slot(name="main_text.text", source="text.main_text", batch_creatives=True),
