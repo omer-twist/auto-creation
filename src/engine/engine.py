@@ -83,9 +83,14 @@ class CreativeEngine:
 
             if batch_creatives:
                 # 1 call, count=creative_count → list of N values
+                merged_inputs = {**inputs}
+                for slot in slots:
+                    if slot.generator_config:
+                        merged_inputs.update(slot.generator_config)
+
                 context = GenerationContext(
                     topic=topic,
-                    inputs=inputs,
+                    inputs=merged_inputs,
                     options=options,
                     count=count,
                 )

@@ -12,10 +12,12 @@ from ...clients.creative import CreativeClient
 
 @register("image.product")
 class ProductImageGenerator(ImageGenerator):
-    """Generates a clean product image from a single product URL.
+    """Generates clean product images from product URLs.
 
-    Uses input_index from generator_config to select which URL to process.
-    Returns 1 image that broadcasts to all creatives.
+    Two modes:
+    - input_index present: process a single image (used by product_grid slots)
+    - input_index absent: cycling mode — process each unique URL once, then
+      cycle round-robin to fill `count` items (used by half_half batch slot)
     """
 
     # INPUTS defined in src/generators/inputs.py (kept separate to avoid heavy imports in serializers)
@@ -28,6 +30,31 @@ class ProductImageGenerator(ImageGenerator):
     ):
         super().__init__(removebg=removebg, creative=creative)
         self.gemini = gemini
+
+    def generate(self, context: GenerationContext) -> list[str]:
+        """Route to single-image or cycling mode based on input_index."""
+        input_index = context.inputs.get("input_index")
+        if input_index is not None:
+            # Original single-image path
+            return super().generate(context)
+
+        # Cycling mode: process each unique image once, then cycle
+        image_urls = context.inputs.get("product_image_urls", [])
+        if not image_urls:
+            raise ValueError("No product_image_urls provided")
+
+        unique_results = []
+        for i in range(len(image_urls)):
+            single_ctx = GenerationContext(
+                topic=context.topic,
+                inputs={**context.inputs, "input_index": i},
+                options=context.options,
+                count=1,
+            )
+            urls = super().generate(single_ctx)
+            unique_results.append(urls[0])
+
+        return [unique_results[i % len(unique_results)] for i in range(context.count)]
 
     def _generate_raw(self, context: GenerationContext) -> list[bytes]:
         """Download and process a single product image via Gemini."""

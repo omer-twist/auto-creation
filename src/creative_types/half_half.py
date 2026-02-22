@@ -44,7 +44,7 @@ HALF_HALF_CONFIG = CreativeTypeConfig(
         Slot(name="bg_right.background_color", source="style.bg_right"),
         # CTA button
         Slot(name="cta.image", source="cta.button_image"),
-        # Product image - single image broadcast to all 12
-        Slot(name="image.image", source="image.product", generator_config={"input_index": 0, "aspect_ratio": "9:16"}),
+        # Product image(s) - cycles round-robin across creatives
+        Slot(name="image.image", source="image.product", batch_creatives=True, generator_config={"aspect_ratio": "9:16"}),
     ],
 )
